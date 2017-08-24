@@ -2,7 +2,7 @@
 
 
 
-Camera::Camera()
+Camera::Camera() : m_worldTransform(glm::mat4(1)), m_viewTransform(glm::mat4(1)), m_projectionTransform(glm::mat4(1)), m_projectionViewTransform(glm::mat4(1))
 {
 }
 
@@ -28,24 +28,27 @@ void Camera::setLookAt(glm::vec3 eye, glm::vec3 center, glm::vec3 up)
 	glm::mat4 V = glm::mat4(x.x, y.x, z.x, 0, x.y, y.y, z.y, 0, x.z, y.z, z.z, 0, 0, 0, 0, 1);
 	glm::mat4 T = glm::mat4(1, 0, 0, -eye.x, 0, 1, 0, -eye.y, 0, 0, 1, -eye.z, 0, 0, 0, 1);
 
-	viewTransform = V * T;
-	worldTransform = -viewTransform;
+	m_viewTransform = V * T;
+	m_worldTransform = -m_viewTransform;
 }
 
 void Camera::setPosition(glm::vec3 pos)
 {
-	viewTransform[0][4] = pos.x;
-	viewTransform[1][4] = pos.y;
-	viewTransform[2][4] = pos.z;
-	worldTransform = -viewTransform;
+	m_worldTransform[3] = glm::vec4(pos, 1);
+	m_viewTransform = -m_worldTransform;
 }
 
 glm::mat4 Camera::getWorldTransform()
 {
-	return worldTransform;
+	return m_worldTransform;
 }
 
 glm::mat4 Camera::getView()
 {
-	return viewTransform;
+	return m_viewTransform;
+}
+
+glm::mat4 Camera::getProjectionView()
+{
+	return m_projectionTransform * m_viewTransform;
 }

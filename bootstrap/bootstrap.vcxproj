@@ -117,22 +117,24 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
-    <ClCompile Include="CamApp.cpp" />
+    <ClCompile Include="CameraApplication.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="FlyCamera.cpp" />
     <ClCompile Include="Gizmos.cpp" />
     <ClCompile Include="gl_core_4_4.c" />
     <ClCompile Include="IntroApp.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
-    <ClInclude Include="CamApp.h" />
+    <ClInclude Include="CameraApplication.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="FlyCamera.h" />
     <ClInclude Include="Gizmos.h" />
     <ClInclude Include="gl_core_4_4.h" />
     <ClInclude Include="IntroApp.h" />
+    <ClInclude Include="Transform.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

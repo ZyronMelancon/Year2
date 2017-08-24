@@ -36,7 +36,10 @@
     <ClCompile Include="FlyCamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CamApp.cpp">
+    <ClCompile Include="CameraApplication.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -59,7 +62,10 @@
     <ClInclude Include="FlyCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CamApp.h">
+    <ClInclude Include="CameraApplication.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

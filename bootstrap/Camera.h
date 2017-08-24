@@ -12,12 +12,12 @@ public:
 	glm::mat4 getWorldTransform();
 	glm::mat4 getView();
 	glm::mat4 getProjection();
-	glm::mat4 getProjevtionView();
+	glm::mat4 getProjectionView();
 private:
-	glm::mat4 worldTransform;
-	glm::mat4 viewTransform;
-	glm::mat4 projectionTransform;
-	glm::mat4 projectionViewTransform;
+	glm::mat4 m_worldTransform;
+	glm::mat4 m_viewTransform;
+	glm::mat4 m_projectionTransform;
+	glm::mat4 m_projectionViewTransform;
 
 	void updateProjectionViewTransform();
 };

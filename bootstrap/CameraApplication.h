@@ -2,12 +2,12 @@
 #include "Application.h"
 #include "FlyCamera.h"
 
-class CamApp :
+class CameraApplication :
 	public Application
 {
 public:
-	CamApp();
-	virtual ~CamApp();
+	CameraApplication();
+	virtual ~CameraApplication();
 
 	void startup() override;
 	void draw() override;
@@ -15,6 +15,5 @@ public:
 	void shutdown() override;
 
 private:
-	Camera * m_flyCam;
+	Camera * m_camera;
 };
-
