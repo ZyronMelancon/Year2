@@ -5,6 +5,6 @@
 int main()
 {
 	Application* app = new CameraApplication();
-	app->run("Intro",800,600,false);
+	app->run("Intro",800,800,false);
 	delete app;
 }

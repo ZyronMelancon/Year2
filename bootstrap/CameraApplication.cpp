@@ -24,7 +24,7 @@ void CameraApplication::startup()
 	m_camera->setPerspective(1, 1, 0, 100);
 }
 
-
+glm::vec3 earthpos = glm::vec3(0, 0, 0);
 void CameraApplication::draw()
 {
 	glm::mat4 s1 = glm::mat4(1);
@@ -33,6 +33,7 @@ void CameraApplication::draw()
 	Gizmos::clear();
 	Gizmos::addSphere(s1[3], 1, 20, 20, color);
 	Gizmos::addTransform(s1, 4);
+	Gizmos::addSphere(earthpos, 0.3, 10, 10, color);
 	glm::vec4 white(1);
 	glm::vec4 black(0, 0, 0, 1);
 	for (int i = 0; i < 21; i++)
@@ -43,11 +44,16 @@ void CameraApplication::draw()
 	Gizmos::draw(m_camera->getProjectionView());
 }
 
+float totalTime = 0;
 static double c_mx, c_my; //Current mouse pos
 static double p_mx, p_my; //Previous mouse pos
 static double d_mx, d_my; //Delta mouse
 void CameraApplication::update(float deltaTime)
 {
+	totalTime += deltaTime;
+	earthpos.x = glm::cos(totalTime) * 5;
+	earthpos.z = glm::sin(totalTime) * 5;
+
 	bool pressed = false;
 	glfwGetCursorPos(m_window, &c_mx, &c_my);
 	d_mx = c_mx - p_mx;
