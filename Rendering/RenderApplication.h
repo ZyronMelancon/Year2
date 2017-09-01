@@ -3,11 +3,8 @@
 #include "glm.hpp"
 #include "FlyCamera.h"
 
-struct Vertex
-{
-	glm::vec4 position;
-	glm::vec4 color;
-};
+class Mesh;
+
 
 class RenderApplication :
 	public Application
@@ -23,10 +20,8 @@ public:
 	void draw() override;
 	unsigned int indexCount;
 	void generateGrid(unsigned int rows, unsigned int cols);
-	unsigned int m_VAO;
-	unsigned int m_VBO;
-	unsigned int m_IBO;
 	unsigned int m_programID;
-	Camera * cam = new FlyCamera();
+	Camera * m_camera = new FlyCamera();
 	unsigned int m_row, m_column;
+	Mesh * m_mesh;
 };
