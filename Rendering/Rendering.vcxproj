@@ -118,11 +118,13 @@
   <ItemGroup>
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="RenderApplication.cpp" />
+    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="RenderApplication.h" />
+    <ClInclude Include="Shader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
