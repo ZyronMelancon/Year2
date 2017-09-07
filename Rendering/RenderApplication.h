@@ -1,10 +1,10 @@
 #pragma once
 #include "Application.h"
-#include "glm.hpp"
 #include "FlyCamera.h"
+#include <vector>
+#include "ext.hpp"
 
 class Mesh;
-
 
 class RenderApplication :
 	public Application
@@ -24,4 +24,6 @@ public:
 	Camera * m_camera = new FlyCamera();
 	unsigned int m_row, m_column;
 	Mesh * m_mesh;
+	Mesh * grid;
+	unsigned int gridCount;
 };

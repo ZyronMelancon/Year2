@@ -1,10 +1,46 @@
 #include "RenderApplication.h"
-#include "gl_core_4_4.h"
-#include <vector>
-#include <cstdio>
-#include "ext.hpp"
+#include <gl_core_4_4.h>
 #include <GLFW/glfw3.h>
+#include <cstdio>
 #include "Mesh.h"
+
+
+
+std::vector<glm::vec4> genHalfCircle(float radius, int np)
+{
+	std::vector<glm::vec4> vecs;
+	if (np < 3 || radius == 0)
+	{
+		return vecs;
+	}
+
+	for (int i = 0; i < np; i++)
+	{
+		float rad = glm::pi<float>() / (np - 1) * i;
+		vecs.push_back(glm::vec4(sin(rad), cos(rad), 0, 1));
+	}
+
+	return vecs;
+}
+
+std::vector<glm::vec4> rotatePoints(std::vector<glm::vec4> points, int nm)
+{
+	std::vector<glm::vec4> vecs;
+	if (nm < 4 || points.size() == 0)
+		return vecs;
+
+	for (int i = 0; i < nm; i++)
+		for (unsigned int o = 0; o < points.size(); o++)
+		{
+			float rad = 2 * glm::pi<float>() / nm * i;
+			float newX = points[o].x * cos(rad);
+			float newY = points[o].y;
+			float newZ = points[o].x * -sin(rad);
+			vecs.push_back(glm::vec4(newX, newY, newZ, 1));
+		}
+
+	return vecs;
+}
 
 void RenderApplication::generateGrid(unsigned int rows, unsigned int cols)
 {
@@ -37,21 +73,19 @@ void RenderApplication::generateGrid(unsigned int rows, unsigned int cols)
 
 	std::vector<Vertex> verts;
 	std::vector<unsigned int> indices;
-	m_mesh = new Mesh();
 	for (unsigned int i = 0; i < rows * cols; i++)
 		verts.push_back(aoVertices[i]);
 
 	for (unsigned int i = 0; i < numitems; i++)
 		indices.push_back(auiIndices[i]);
 
+	grid = new Mesh();
 
-	m_mesh->initialize(verts, indices);
+	grid->initialize(verts, indices);
 	
-	m_mesh->create_buffers();
-	m_camera->setPerspective(1, 16 / 9, 0, 100);
-	m_camera->setPosition(glm::vec3(1, 1, 10));
+	grid->create_buffers();
 
-	indexCount = (rows - 1) * (cols - 1) * 6;
+	gridCount = (rows - 1) * (cols - 1) * 6;
 
 
 	delete[] aoVertices;
@@ -69,8 +103,32 @@ RenderApplication::~RenderApplication()
 
 void RenderApplication::startup()
 {
-	generateGrid(7, 7);
+	//generateGrid(7, 7);
 	//create shaders
+	std::vector<unsigned int> thing;
+	std::vector<glm::vec4> diamondpoints = rotatePoints(genHalfCircle(2, 40), 40);
+	std::vector<Vertex> TheDiamond;
+
+	
+	
+	for (unsigned int i = 0; i < diamondpoints.size(); i++)
+	{
+		Vertex zoz;
+		zoz.position = diamondpoints[i];
+		zoz.color = glm::vec4(1,1,1,1);
+		TheDiamond.push_back(zoz);
+		thing.push_back(i);
+	}
+
+	m_mesh = new Mesh();
+
+	m_mesh->initialize(TheDiamond, thing);
+	m_mesh->create_buffers();
+	m_camera->setPerspective(1, 16 / 9, 0, 100);
+	m_camera->setPosition(glm::vec3(1, 1, 10));
+
+	generateGrid(7, 7);
+
 	const char * vsSource = "#version 410\n \
 							layout(location=0) in vec4 position; \
 							layout(location=1) in vec4 color; \
@@ -120,6 +178,8 @@ static double p_mx, p_my; //Previous mouse pos
 static double d_mx, d_my; //Delta mouse
 void RenderApplication::update(float deltaTime)
 {
+
+
 	//Camera rotation
 	bool pressed = false;
 	glfwGetCursorPos(m_window, &c_mx, &c_my);
@@ -184,11 +244,18 @@ void RenderApplication::draw()
 	glm::mat4 pv = m_camera->getProjectionView();
 	glm::mat4 model = glm::mat4(1);
 	glm::mat4 mvp = pv * model;
+	
 	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp));
 
 	m_mesh->bind();
+	glDrawElements(GL_POINTS, m_mesh->index_count, GL_UNSIGNED_INT, 0);
+	m_mesh->unbind();
 
-	glDrawElements(GL_TRIANGLES, m_mesh->index_count, GL_UNSIGNED_INT, 0);
+	
+	grid->bind();
+	glDrawElements(GL_TRIANGLES, grid->index_count, GL_UNSIGNED_INT, 0);
+	grid->unbind();
+
 	glBindVertexArray(0);
 	glUseProgram(0);
 }

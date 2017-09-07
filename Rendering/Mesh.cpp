@@ -1,9 +1,6 @@
 #include "Mesh.h"
 #include <gl_core_4_4.h>
-#include <glm.hpp>
-#include <ext.hpp>
-#include <iostream>
-#include <string>
+
 Mesh::Mesh()
 {
 }
