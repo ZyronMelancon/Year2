@@ -29,7 +29,7 @@ std::vector<glm::vec4> rotatePoints(std::vector<glm::vec4> points, int nm)
 	if (nm < 4 || points.size() == 0)
 		return vecs;
 
-	for (int i = 0; i < nm; i++)
+	for (int i = 0; i <= nm; i++)
 		for (unsigned int o = 0; o < points.size(); o++)
 		{
 			float rad = 2 * glm::pi<float>() / nm * i;
@@ -103,26 +103,43 @@ RenderApplication::~RenderApplication()
 
 void RenderApplication::startup()
 {
-	//generateGrid(7, 7);
-	//create shaders
-	std::vector<unsigned int> thing;
-	std::vector<glm::vec4> diamondpoints = rotatePoints(genHalfCircle(2, 40), 40);
-	std::vector<Vertex> TheDiamond;
-
 	
+	//create shaders
+	int numPoints = 20;
+	int numMeridian = 20;
+	float radius = 2;
+
+	std::vector<unsigned int> indices;
+	std::vector<glm::vec4> diamondpoints = rotatePoints(genHalfCircle(radius, numPoints), numMeridian);
+	std::vector<Vertex> TheSphere;
 	
 	for (unsigned int i = 0; i < diamondpoints.size(); i++)
 	{
 		Vertex zoz;
 		zoz.position = diamondpoints[i];
 		zoz.color = glm::vec4(1,1,1,1);
-		TheDiamond.push_back(zoz);
-		thing.push_back(i);
+		TheSphere.push_back(zoz);
+	}
+
+	for (unsigned int i = 0; i < numMeridian; i++)
+	{
+		for (unsigned int o = 0; o < numPoints; o++)
+		{
+			unsigned int botL = i * numMeridian + o;
+			indices.push_back(botL);
+			indices.push_back(botL + numMeridian);		//botR
+		}
 	}
 
 	m_mesh = new Mesh();
 
-	m_mesh->initialize(TheDiamond, thing);
+	for (auto v : TheSphere)
+	{
+		v.position = v.position * glm::translate(glm::vec3(5, 10, 10));
+	}
+
+	m_mesh->initialize(TheSphere, indices);
+
 	m_mesh->create_buffers();
 	m_camera->setPerspective(1, 16 / 9, 0, 100);
 	m_camera->setPosition(glm::vec3(1, 1, 10));
@@ -237,22 +254,29 @@ void RenderApplication::update(float deltaTime)
 
 void RenderApplication::draw()
 {
+	glEnable(GL_DEPTH_TEST);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glUseProgram(m_programID);
 	int mvpUniform = glGetUniformLocation(m_programID, "projectionViewWorldMatrix");
 	glm::mat4 pv = m_camera->getProjectionView();
 	glm::mat4 model = glm::mat4(1);
 	glm::mat4 mvp = pv * model;
 	
-	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp));
-
+	
+	glm::mat4 move = glm::translate(glm::vec3(3, 1, 3));
+	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp * move));
 	m_mesh->bind();
-	glDrawElements(GL_POINTS, m_mesh->index_count, GL_UNSIGNED_INT, 0);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glDrawElements(GL_TRIANGLE_STRIP, m_mesh->index_count, GL_UNSIGNED_INT, 0);
+	//glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp));
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glDrawElements(GL_TRIANGLE_STRIP, m_mesh->index_count, GL_UNSIGNED_INT, 0);
 	m_mesh->unbind();
 
-	
+	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp));
 	grid->bind();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDrawElements(GL_TRIANGLES, grid->index_count, GL_UNSIGNED_INT, 0);
 	grid->unbind();
 
