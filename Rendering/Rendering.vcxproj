@@ -69,7 +69,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\bootstrap;$(SolutionDir)\Dep\include;$(SolutionDir)\Dep\glm</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\bootstrap;$(SolutionDir)\Dep\include;$(SolutionDir)\Dep\glm;$(SolutionDir)\Dep\imgui</IncludePath>
     <LibraryPath>$(SolutionDir)\Dep\bootstrap;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(SolutionDir)\Dep\lib-vc2015</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

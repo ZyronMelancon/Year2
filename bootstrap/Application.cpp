@@ -2,7 +2,8 @@
 #include "gl_core_4_4.h"
 #include <GLFW/glfw3.h>
 #include "Gizmos.h"
-
+#include "imgui.h"
+#include "imgui_impl_glfw_gl3.h"
 
 Application::Application()
 {
@@ -38,7 +39,10 @@ void Application::run(const char * title, unsigned int width, unsigned int heigh
 	}
 
 	startup();
-
+	ImGui_ImplGlfwGL3_Init(m_window, true);
+	ImGuiIO& io = ImGui::GetIO();
+	io.DisplaySize.x = width;
+	io.DisplaySize.y = height;
 
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.5f, 0.5f, 1.0f, 1.0f);
@@ -58,6 +62,7 @@ void Application::run(const char * title, unsigned int width, unsigned int heigh
 		glfwPollEvents();
 		update(deltaTime);
 		draw();
+		ImGui::Render();
 		glfwSwapBuffers(m_window);
 		m_gameover = (glfwWindowShouldClose(m_window) == GLFW_TRUE);
 

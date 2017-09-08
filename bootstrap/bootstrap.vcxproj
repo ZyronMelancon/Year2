@@ -69,7 +69,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\Dep\include;$(SolutionDir)\Dep\glm</IncludePath>
+    <IncludePath>$(SolutionDir)\Dep\imgui;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\Dep\include;$(SolutionDir)\Dep\glm</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(SolutionDir)\Dep\lib-vc2015</LibraryPath>
     <TargetExt>.lib</TargetExt>
     <OutDir>$(SolutionDir)dep\$(ProjectName)</OutDir>
@@ -125,23 +125,31 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Dep\imgui\imgui.cpp" />
+    <ClCompile Include="..\Dep\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\Dep\imgui\imgui_draw.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="CameraApplication.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="FlyCamera.cpp" />
     <ClCompile Include="Gizmos.cpp" />
     <ClCompile Include="gl_core_4_4.c" />
+    <ClCompile Include="imgui_impl_glfw_gl3.cpp" />
     <ClCompile Include="IntroApp.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Dep\imgui\imconfig.h" />
+    <ClInclude Include="..\Dep\imgui\imgui.h" />
+    <ClInclude Include="..\Dep\imgui\imgui_internal.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="CameraApplication.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="FlyCamera.h" />
     <ClInclude Include="Gizmos.h" />
     <ClInclude Include="gl_core_4_4.h" />
+    <ClInclude Include="imgui_impl_glfw_gl3.h" />
     <ClInclude Include="IntroApp.h" />
     <ClInclude Include="Transform.h" />
   </ItemGroup>

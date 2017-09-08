@@ -4,7 +4,10 @@
 #include <cstdio>
 #include "Mesh.h"
 
+#include <imgui.h>
+#include "imgui_impl_glfw_gl3.h"
 
+Mesh * transarrow;
 
 std::vector<glm::vec4> genHalfCircle(float radius, int np)
 {
@@ -103,8 +106,46 @@ RenderApplication::~RenderApplication()
 
 void RenderApplication::startup()
 {
-	
-	//create shaders
+	std::vector<glm::vec4> thingy;
+
+	thingy.push_back(glm::vec4(.2f, 0, 0, 1));
+	thingy.push_back(glm::vec4(.2f, 2, 0, 1));
+	thingy.push_back(glm::vec4(.35f, 2, 0, 1));
+	thingy.push_back(glm::vec4(0, 3, 0, 1));
+
+	std::vector<glm::vec4> thingy2 = rotatePoints(thingy, 8);
+
+
+
+	std::vector<Vertex> transArrowVerts;
+
+	for (int i = 0; i < thingy2.size(); i++)
+	{
+		Vertex thing;
+		thing.position = thingy2[i];
+		thing.color = glm::vec4(1, 1, 1, 1);
+		transArrowVerts.push_back(thing);
+	}
+
+
+
+	std::vector<unsigned int> transIndices;
+
+	for (unsigned int i = 0; i < 8; i++)
+	{
+		for (unsigned int o = 0; o < 4; o++)
+		{
+			unsigned int botL = i * 4 + o;
+			transIndices.push_back(botL);
+			transIndices.push_back(botL + 4);
+		}
+	}
+
+	transarrow = new Mesh();
+	transarrow->initialize(transArrowVerts, transIndices);
+	transarrow->create_buffers();
+
+	//Sphere generation
 	int numPoints = 20;
 	int numMeridian = 20;
 	float radius = 2;
@@ -127,16 +168,11 @@ void RenderApplication::startup()
 		{
 			unsigned int botL = i * numMeridian + o;
 			indices.push_back(botL);
-			indices.push_back(botL + numMeridian);		//botR
+			indices.push_back(botL + numMeridian);
 		}
 	}
 
 	m_mesh = new Mesh();
-
-	for (auto v : TheSphere)
-	{
-		v.position = v.position * glm::translate(glm::vec3(5, 10, 10));
-	}
 
 	m_mesh->initialize(TheSphere, indices);
 
@@ -144,8 +180,15 @@ void RenderApplication::startup()
 	m_camera->setPerspective(1, 16 / 9, 0, 100);
 	m_camera->setPosition(glm::vec3(1, 1, 10));
 
+
+
+
+	//Gen grid
 	generateGrid(7, 7);
 
+
+
+	//Create shaders
 	const char * vsSource = "#version 410\n \
 							layout(location=0) in vec4 position; \
 							layout(location=1) in vec4 color; \
@@ -256,6 +299,15 @@ void RenderApplication::draw()
 {
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	ImGui_ImplGlfwGL3_NewFrame();
+	ImGui::Begin("menu");
+	ImGui::Text("t12");
+
+	ImGui::End();
+
+	if (ImGui::Button("hello world"))
+		printf("hello guvanaana\n");
+	
 
 	glUseProgram(m_programID);
 	int mvpUniform = glGetUniformLocation(m_programID, "projectionViewWorldMatrix");
@@ -265,6 +317,8 @@ void RenderApplication::draw()
 	
 	
 	glm::mat4 move = glm::translate(glm::vec3(3, 1, 3));
+	glm::mat4 rotate90Z = glm::rotate(glm::mat4(1),-glm::pi<float>()/2, glm::vec3(0, 0, 1));
+	glm::mat4 rotate90X = glm::rotate(glm::mat4(1), glm::pi<float>() / 2, glm::vec3(1, 0, 0));
 	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp * move));
 	m_mesh->bind();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -274,11 +328,22 @@ void RenderApplication::draw()
 	//glDrawElements(GL_TRIANGLE_STRIP, m_mesh->index_count, GL_UNSIGNED_INT, 0);
 	m_mesh->unbind();
 
+	transarrow->bind();
+	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp));
+	glDrawElements(GL_TRIANGLE_STRIP, transarrow->index_count, GL_UNSIGNED_INT, 0);
+	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp * rotate90Z));
+	glDrawElements(GL_TRIANGLE_STRIP, transarrow->index_count, GL_UNSIGNED_INT, 0);
+	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp * rotate90X));
+	glDrawElements(GL_TRIANGLE_STRIP, transarrow->index_count, GL_UNSIGNED_INT, 0);
+	transarrow->unbind();
+
 	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp));
 	grid->bind();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDrawElements(GL_TRIANGLES, grid->index_count, GL_UNSIGNED_INT, 0);
 	grid->unbind();
+
+
 
 	glBindVertexArray(0);
 	glUseProgram(0);
