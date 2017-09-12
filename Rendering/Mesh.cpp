@@ -1,5 +1,6 @@
 #include "Mesh.h"
 #include <gl_core_4_4.h>
+#include <ext.hpp>
 
 Mesh::Mesh()
 {
@@ -64,6 +65,16 @@ void Mesh::unbind()
 {
 	glBindVertexArray(0);
 	
+}
+
+void Mesh::draw(unsigned int program, unsigned int renderType, glm::mat4 mod)
+{
+	glBindVertexArray(m_vao);
+
+	glUniformMatrix4fv(glGetUniformLocation(program, "projectionViewWorldMatrix"), 1, false, glm::value_ptr(mod));
+	glDrawElements(renderType, this->index_count, GL_UNSIGNED_INT, 0);
+
+	glBindVertexArray(0);
 }
 
  

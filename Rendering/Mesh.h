@@ -17,6 +17,7 @@ public:
 	void initialize(std::vector<Vertex>& verts, std::vector<unsigned int>& indices);
 	void bind();
 	void unbind();
+	void draw(unsigned int program, unsigned int renderType, glm::mat4 mod);
 	unsigned int index_count;
 	unsigned int vertex_count;
 	std::vector<unsigned int> m_indices;

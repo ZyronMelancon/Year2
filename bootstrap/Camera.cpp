@@ -13,7 +13,16 @@ Camera::~Camera()
 
 void Camera::setPerspective(float fov, float aspect, float near, float far)
 {
-	glm::mat4 expected = glm::perspective(fov, aspect, far, near);
+	glm::mat4 expected = glm::perspective(fov, aspect, near, far);
+
+	//glm::mat4 view = glm::mat4(0);
+
+	//view[0].x = 1 / tan(fov / 2);
+	//view[1].y = 1 / (aspect / tan(fov / 2));
+	//view[2].w = -1;
+	//view[2].z = (far + near) / (far - near);
+	//view[3].z = (2 * far*near) / (far - near);
+
 	m_projectionTransform = expected;
 }
 

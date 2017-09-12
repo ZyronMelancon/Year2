@@ -35,6 +35,7 @@ std::vector<glm::vec4> rotatePoints(std::vector<glm::vec4> points, int nm)
 	for (int i = 0; i <= nm; i++)
 		for (unsigned int o = 0; o < points.size(); o++)
 		{
+			//Todo:: should breakout this rad variable to be something meaningful  and maybe not do decimal mult 
 			float rad = 2 * glm::pi<float>() / nm * i;
 			float newX = points[o].x * cos(rad);
 			float newY = points[o].y;
@@ -106,14 +107,14 @@ RenderApplication::~RenderApplication()
 
 void RenderApplication::startup()
 {
-	std::vector<glm::vec4> thingy;
+	std::vector<glm::vec4> arrowShape;
 
-	thingy.push_back(glm::vec4(.2f, 0, 0, 1));
-	thingy.push_back(glm::vec4(.2f, 2, 0, 1));
-	thingy.push_back(glm::vec4(.35f, 2, 0, 1));
-	thingy.push_back(glm::vec4(0, 3, 0, 1));
+	arrowShape.push_back(glm::vec4(.2f, 0, 0, 1));
+	arrowShape.push_back(glm::vec4(.2f, 2, 0, 1));
+	arrowShape.push_back(glm::vec4(.35f, 2, 0, 1));
+	arrowShape.push_back(glm::vec4(0, 3, 0, 1));
 
-	std::vector<glm::vec4> thingy2 = rotatePoints(thingy, 8);
+	std::vector<glm::vec4> thingy2 = rotatePoints(arrowShape, 16);
 
 
 
@@ -131,7 +132,7 @@ void RenderApplication::startup()
 
 	std::vector<unsigned int> transIndices;
 
-	for (unsigned int i = 0; i < 8; i++)
+	for (unsigned int i = 0; i < 16; i++)
 	{
 		for (unsigned int o = 0; o < 4; o++)
 		{
@@ -177,7 +178,7 @@ void RenderApplication::startup()
 	m_mesh->initialize(TheSphere, indices);
 
 	m_mesh->create_buffers();
-	m_camera->setPerspective(1, 16 / 9, 0, 100);
+	m_camera->setPerspective(1, 1, 0.1f, 100);
 	m_camera->setPosition(glm::vec3(1, 1, 10));
 
 
@@ -189,17 +190,30 @@ void RenderApplication::startup()
 
 
 	//Create shaders
+	/*const char * vsSource = "#version 410\n \
+							layout(location=0) in vec4 position; \
+							layout(location=1) in vec4 color; \
+							out vec4 vColor; \
+							uniform float time;\
+							uniform mat4 projectionViewWorldMatrix; \
+							void main() { vColor = color; \
+							vec4 disp = vec4(cos(time), sin(time), cos(time)/sin(time), 1);									\
+							vec4 np = disp + position;							\
+							gl_Position = projectionViewWorldMatrix * np; }";*/
+
 	const char * vsSource = "#version 410\n \
 							layout(location=0) in vec4 position; \
 							layout(location=1) in vec4 color; \
 							out vec4 vColor; \
 							uniform mat4 projectionViewWorldMatrix; \
-							void main() { vColor = color; gl_Position = projectionViewWorldMatrix * position; }";
+							void main() { vColor = color; \
+							gl_Position = projectionViewWorldMatrix * position; }";
 
 	const char * fsSource = "#version 410\n \
 							in vec4 vColor; \
 							out vec4 fragColor; \
-							void main() { fragColor = vColor; }";
+							uniform vec4 zColor; \
+							void main() { fragColor = vColor * zColor; }";
 	int success = GL_FALSE;
 	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -236,9 +250,10 @@ void RenderApplication::shutdown()
 static double c_mx, c_my; //Current mouse pos
 static double p_mx, p_my; //Previous mouse pos
 static double d_mx, d_my; //Delta mouse
+float pastTime = 0;
 void RenderApplication::update(float deltaTime)
 {
-
+	pastTime += deltaTime;
 
 	//Camera rotation
 	bool pressed = false;
@@ -261,90 +276,119 @@ void RenderApplication::update(float deltaTime)
 	{
 		glm::vec3 move = glm::vec3(m_camera->getWorldTransform()[3].x + m_camera->getWorldTransform()[0].z * deltaTime * 6, m_camera->getWorldTransform()[3].y, m_camera->getWorldTransform()[3].z - m_camera->getWorldTransform()[2].z * deltaTime * 6);
 		m_camera->setPosition(move);
-		printf("W pressed!\n");
 	}
 	if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_PRESS)
 	{
 		glm::vec3 move = glm::vec3(m_camera->getWorldTransform()[3].x - m_camera->getWorldTransform()[0].z * deltaTime * 6, m_camera->getWorldTransform()[3].y, m_camera->getWorldTransform()[3].z + m_camera->getWorldTransform()[2].z * deltaTime * 6);
 		m_camera->setPosition(move);
-		printf("S pressed!\n");
 	}
 	if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_PRESS)
 	{
 		glm::vec3 move = glm::vec3(m_camera->getWorldTransform()[3].x - m_camera->getWorldTransform()[2].z * deltaTime * 6, m_camera->getWorldTransform()[3].y, m_camera->getWorldTransform()[3].z - m_camera->getWorldTransform()[0].z * deltaTime * 6);
 		m_camera->setPosition(move);
-		printf("A pressed!\n");
 	}
 	if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_PRESS)
 	{
 		glm::vec3 move = glm::vec3(m_camera->getWorldTransform()[3].x + m_camera->getWorldTransform()[2].z * deltaTime * 6, m_camera->getWorldTransform()[3].y, m_camera->getWorldTransform()[3].z + m_camera->getWorldTransform()[0].z * deltaTime * 6);
 		m_camera->setPosition(move);
-		printf("D pressed!\n");
 	}
 	if (glfwGetKey(m_window, GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
 		glm::vec3 move = glm::vec3(m_camera->getWorldTransform()[3].x, m_camera->getWorldTransform()[3].y + 6 * deltaTime, m_camera->getWorldTransform()[3].z);
 		m_camera->setPosition(move);
-		printf("Space pressed!\n");
 	}
 	if (glfwGetKey(m_window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 	{
 		glm::vec3 move = glm::vec3(m_camera->getWorldTransform()[3].x, m_camera->getWorldTransform()[3].y - 6 * deltaTime, m_camera->getWorldTransform()[3].z);
 		m_camera->setPosition(move);
-		printf("LCtrl pressed!\n");
 	}
+	if (glfwGetKey(m_window, GLFW_KEY_E) == GLFW_PRESS)
+	{
+		m_camera->setLookAt(glm::vec3(m_camera->getWorldTransform()[3][0], m_camera->getWorldTransform()[3][1], m_camera->getWorldTransform()[3][2]), glm::vec3(3, 1, 3), glm::vec3(0,1,0));
+	}
+
+
 }
 
 void RenderApplication::draw()
 {
+	//Hella RGB fade
+	glm::vec4 colorfade = glm::vec4((sin(pastTime) / 2) + 0.5f, (cos(pastTime) / 2) + 0.5f, (-sin(pastTime) / 2) + 0.5f, 1);
+
+	//Depth stuff
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//GUI stuff
 	ImGui_ImplGlfwGL3_NewFrame();
 	ImGui::Begin("menu");
-	ImGui::Text("t12");
-
+	ImGui::Text("This is a test.");
+	ImGui::BulletText("This is also a test.");
+	
+	ImGui::MenuItem("This too.", 0, false, true);
 	ImGui::End();
 
 	if (ImGui::Button("hello world"))
 		printf("hello guvanaana\n");
-	
 
+	ImGui::Begin("ayyyy");
+	ImGui::SliderFloat3("color zColor", &colorfade[0], 0, 1);
+	ImGui::TextColored(ImVec4(colorfade.x, colorfade.y, colorfade.z, colorfade.w), glm::to_string(colorfade).c_str());
+	ImGui::End();
+
+	//Set MVP matrix
 	glUseProgram(m_programID);
 	int mvpUniform = glGetUniformLocation(m_programID, "projectionViewWorldMatrix");
 	glm::mat4 pv = m_camera->getProjectionView();
 	glm::mat4 model = glm::mat4(1);
 	glm::mat4 mvp = pv * model;
 	
-	
+	//Some extra matrices
 	glm::mat4 move = glm::translate(glm::vec3(3, 1, 3));
 	glm::mat4 rotate90Z = glm::rotate(glm::mat4(1),-glm::pi<float>()/2, glm::vec3(0, 0, 1));
 	glm::mat4 rotate90X = glm::rotate(glm::mat4(1), glm::pi<float>() / 2, glm::vec3(1, 0, 0));
-	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp * move));
-	m_mesh->bind();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glDrawElements(GL_TRIANGLE_STRIP, m_mesh->index_count, GL_UNSIGNED_INT, 0);
-	//glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp));
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	//glDrawElements(GL_TRIANGLE_STRIP, m_mesh->index_count, GL_UNSIGNED_INT, 0);
-	m_mesh->unbind();
-
-	transarrow->bind();
-	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp));
-	glDrawElements(GL_TRIANGLE_STRIP, transarrow->index_count, GL_UNSIGNED_INT, 0);
-	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp * rotate90Z));
-	glDrawElements(GL_TRIANGLE_STRIP, transarrow->index_count, GL_UNSIGNED_INT, 0);
-	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp * rotate90X));
-	glDrawElements(GL_TRIANGLE_STRIP, transarrow->index_count, GL_UNSIGNED_INT, 0);
-	transarrow->unbind();
-
-	glUniformMatrix4fv(mvpUniform, 1, false, glm::value_ptr(mvp));
-	grid->bind();
+	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDrawElements(GL_TRIANGLES, grid->index_count, GL_UNSIGNED_INT, 0);
-	grid->unbind();
+	
+	//Apply hella RGB fade to fragment shader
+	unsigned int handle = glGetUniformLocation(m_programID, "zColor");
+	glUniform4fv(handle, 1, glm::value_ptr(colorfade));
 
+	//handle = glGetUniformLocation(m_programID, "time");
+	//glUniform1f(handle, pastTime);
 
+	m_mesh->draw(m_programID, GL_TRIANGLE_STRIP, mvp*move);
+
+	//Draw transforms with each color
+	glm::vec4 tmp = glm::vec4(0, 1, 0, 1);
+	glUniform4fv(handle, 1, &tmp[0]);
+	transarrow->draw(m_programID, GL_TRIANGLE_STRIP, mvp);
+
+	tmp = glm::vec4(1, 0, 0, 1);
+	glUniform4fv(handle, 1, &tmp[0]);
+	transarrow->draw(m_programID, GL_TRIANGLE_STRIP, mvp * rotate90Z);
+
+	tmp = glm::vec4(0, 0, 1, 1);
+	glUniform4fv(handle, 1, &tmp[0]);
+	transarrow->draw(m_programID, GL_TRIANGLE_STRIP, mvp * rotate90X);
+
+	//Set the color back to normal
+	tmp = glm::vec4(1, 1, 1, 1);
+	glUniform4fv(handle, 1, &tmp[0]);
+
+	//Draw grid plane
+	grid->draw(m_programID, GL_TRIANGLES, mvp);
 
 	glBindVertexArray(0);
 	glUseProgram(0);
 }
+
+//ToDo:: shader to read from file 
+
+//ToDo:: b/c writing code inside a really long string is not cool at all :(
+
+//ToDo:: shader class to bind uniforms or at least get uniforms...
+
+//ToDo::  mesh class to draw so instead of bind draw unbind just do mesh->draw() which really just does what you just typed.. 
+
+//ToDo::  could receive a mode mesh->draw(gl_triangles)( mesh->draw(gl_trianglestrips) etc...
