@@ -1,5 +1,5 @@
 #include "Shader.h"
-
+#include <gl_core_4_4.h>
 
 
 Shader::Shader()
@@ -25,6 +25,8 @@ void Shader::load(const char* filename, unsigned type)
 
 void Shader::attach()
 {
+	glAttachShader(m_program, m_vertexShader);
+	glAttachShader(m_program, m_fragmentShader);
 }
 
 void Shader::defaultLoad()

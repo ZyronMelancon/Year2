@@ -8,6 +8,7 @@
 #include "imgui_impl_glfw_gl3.h"
 
 Mesh * transarrow;
+Mesh * cube;
 
 std::vector<glm::vec4> genHalfCircle(float radius, int np)
 {
@@ -20,7 +21,7 @@ std::vector<glm::vec4> genHalfCircle(float radius, int np)
 	for (int i = 0; i < np; i++)
 	{
 		float rad = glm::pi<float>() / (np - 1) * i;
-		vecs.push_back(glm::vec4(sin(rad), cos(rad), 0, 1));
+		vecs.push_back(glm::vec4(sin(rad) * radius, cos(rad) * radius, 0, 1));
 	}
 
 	return vecs;
@@ -44,6 +45,36 @@ std::vector<glm::vec4> rotatePoints(std::vector<glm::vec4> points, int nm)
 		}
 
 	return vecs;
+}
+
+std::vector<unsigned int> genStripIndices(int np, int nm)
+{
+	std::vector<unsigned int> indices;
+
+	for (unsigned int i = 0; i < nm; i++)
+	{
+		for (unsigned int o = 0; o < np; o++)
+		{
+			unsigned int botL = i * np + o;
+			indices.push_back(botL);
+			indices.push_back(botL + np);
+		}
+	}
+
+	return indices;
+}
+
+std::vector<Vertex> genVertices(std::vector<glm::vec4> vecs, glm::vec4 color)
+{
+	std::vector<Vertex> verts;
+	for (int i = 0; i < vecs.size(); i++)
+	{
+		Vertex vert;
+		vert.position = vecs[i];
+		vert.color = color;
+		verts.push_back(vert);
+	}
+	return verts;
 }
 
 void RenderApplication::generateGrid(unsigned int rows, unsigned int cols)
@@ -100,93 +131,117 @@ RenderApplication::RenderApplication()
 {
 }
 
-
 RenderApplication::~RenderApplication()
 {
 }
 
 void RenderApplication::startup()
 {
+	//Making transform arrow
 	std::vector<glm::vec4> arrowShape;
-
 	arrowShape.push_back(glm::vec4(.2f, 0, 0, 1));
 	arrowShape.push_back(glm::vec4(.2f, 2, 0, 1));
 	arrowShape.push_back(glm::vec4(.35f, 2, 0, 1));
 	arrowShape.push_back(glm::vec4(0, 3, 0, 1));
 
-	std::vector<glm::vec4> thingy2 = rotatePoints(arrowShape, 16);
-
-
-
-	std::vector<Vertex> transArrowVerts;
-
-	for (int i = 0; i < thingy2.size(); i++)
-	{
-		Vertex thing;
-		thing.position = thingy2[i];
-		thing.color = glm::vec4(1, 1, 1, 1);
-		transArrowVerts.push_back(thing);
-	}
-
-
-
-	std::vector<unsigned int> transIndices;
-
-	for (unsigned int i = 0; i < 16; i++)
-	{
-		for (unsigned int o = 0; o < 4; o++)
-		{
-			unsigned int botL = i * 4 + o;
-			transIndices.push_back(botL);
-			transIndices.push_back(botL + 4);
-		}
-	}
-
 	transarrow = new Mesh();
-	transarrow->initialize(transArrowVerts, transIndices);
+	transarrow->initialize(genVertices(rotatePoints(arrowShape, 16), glm::vec4(1,1,1,1)), genStripIndices(4,16));
 	transarrow->create_buffers();
+
+
+	//Manually making cube
+	std::vector<glm::vec4> cubeVecs;
+	{
+		cubeVecs.push_back(glm::vec4(0, 0, 0, 1)); //0
+		cubeVecs.push_back(glm::vec4(1, 0, 0, 1)); //1
+		cubeVecs.push_back(glm::vec4(0, 1, 0, 1)); //2
+		cubeVecs.push_back(glm::vec4(1, 1, 0, 1)); //3
+		cubeVecs.push_back(glm::vec4(0, 0, 1, 1)); //4
+		cubeVecs.push_back(glm::vec4(1, 0, 1, 1)); //5
+		cubeVecs.push_back(glm::vec4(0, 1, 1, 1)); //6
+		cubeVecs.push_back(glm::vec4(1, 1, 1, 1)); //7
+	}
+	std::vector<unsigned int> cubeInds;
+	{
+		//Front
+		cubeInds.push_back(0);
+		cubeInds.push_back(1);
+		cubeInds.push_back(2);
+
+		cubeInds.push_back(1);
+		cubeInds.push_back(3);
+		cubeInds.push_back(2);
+
+		//Right
+		cubeInds.push_back(1);
+		cubeInds.push_back(5);
+		cubeInds.push_back(3);
+
+		cubeInds.push_back(5);
+		cubeInds.push_back(7);
+		cubeInds.push_back(3);
+
+		//Left
+		cubeInds.push_back(5);
+		cubeInds.push_back(4);
+		cubeInds.push_back(7);
+
+		cubeInds.push_back(4);
+		cubeInds.push_back(6);
+		cubeInds.push_back(7);
+
+		//Back
+		cubeInds.push_back(4);
+		cubeInds.push_back(0);
+		cubeInds.push_back(6);
+
+		cubeInds.push_back(0);
+		cubeInds.push_back(2);
+		cubeInds.push_back(6);
+
+		//Top
+		cubeInds.push_back(2);
+		cubeInds.push_back(3);
+		cubeInds.push_back(6);
+
+		cubeInds.push_back(3);
+		cubeInds.push_back(7);
+		cubeInds.push_back(6);
+
+		//Bottom
+		cubeInds.push_back(4);
+		cubeInds.push_back(5);
+		cubeInds.push_back(0);
+
+		cubeInds.push_back(5);
+		cubeInds.push_back(1);
+		cubeInds.push_back(0);
+	}
+
+	cube = new Mesh();
+	cube->initialize(genVertices(cubeVecs, glm::vec4(1,1,1,1)), cubeInds);
+	cube->create_buffers();
+
 
 	//Sphere generation
 	int numPoints = 20;
 	int numMeridian = 20;
-	float radius = 2;
-
-	std::vector<unsigned int> indices;
-	std::vector<glm::vec4> diamondpoints = rotatePoints(genHalfCircle(radius, numPoints), numMeridian);
-	std::vector<Vertex> TheSphere;
-	
-	for (unsigned int i = 0; i < diamondpoints.size(); i++)
-	{
-		Vertex zoz;
-		zoz.position = diamondpoints[i];
-		zoz.color = glm::vec4(1,1,1,1);
-		TheSphere.push_back(zoz);
-	}
-
-	for (unsigned int i = 0; i < numMeridian; i++)
-	{
-		for (unsigned int o = 0; o < numPoints; o++)
-		{
-			unsigned int botL = i * numMeridian + o;
-			indices.push_back(botL);
-			indices.push_back(botL + numMeridian);
-		}
-	}
+	float radius = 0.5f;
 
 	m_mesh = new Mesh();
 
-	m_mesh->initialize(TheSphere, indices);
+	m_mesh->initialize(genVertices(rotatePoints(genHalfCircle(radius,numPoints), numMeridian), glm::vec4(1,1,1,1)), genStripIndices(numPoints, numMeridian));
+	//I think Mr. Matthew will yell at me for this but it works...
 
 	m_mesh->create_buffers();
+
+
 	m_camera->setPerspective(1, 1, 0.1f, 100);
 	m_camera->setPosition(glm::vec3(1, 1, 10));
 
 
-
-
 	//Gen grid
 	generateGrid(7, 7);
-
 
 
 	//Create shaders
@@ -266,7 +321,7 @@ void RenderApplication::update(float deltaTime)
 	{
 		pressed = true;
 		glm::vec2 mousevector = glm::vec2(c_mx, c_my);
-		printf("Mouse speed: %f, %f\n", d_mx, d_my);
+		//printf("Mouse speed: %f, %f\n", d_mx, d_my);
 
 		m_camera->setRotationX(d_mx / 800);
 	}
@@ -336,8 +391,10 @@ void RenderApplication::draw()
 	ImGui::TextColored(ImVec4(colorfade.x, colorfade.y, colorfade.z, colorfade.w), glm::to_string(colorfade).c_str());
 	ImGui::End();
 
-	//Set MVP matrix
+	glPolygonMode(GL_FRONT_AND_BACK, GL_POINTS);
 	glUseProgram(m_programID);
+
+	//Set MVP matrix
 	int mvpUniform = glGetUniformLocation(m_programID, "projectionViewWorldMatrix");
 	glm::mat4 pv = m_camera->getProjectionView();
 	glm::mat4 model = glm::mat4(1);
@@ -348,8 +405,6 @@ void RenderApplication::draw()
 	glm::mat4 rotate90Z = glm::rotate(glm::mat4(1),-glm::pi<float>()/2, glm::vec3(0, 0, 1));
 	glm::mat4 rotate90X = glm::rotate(glm::mat4(1), glm::pi<float>() / 2, glm::vec3(1, 0, 0));
 	
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	
 	//Apply hella RGB fade to fragment shader
 	unsigned int handle = glGetUniformLocation(m_programID, "zColor");
 	glUniform4fv(handle, 1, glm::value_ptr(colorfade));
@@ -357,7 +412,11 @@ void RenderApplication::draw()
 	//handle = glGetUniformLocation(m_programID, "time");
 	//glUniform1f(handle, pastTime);
 
+	//Draw sphere
 	m_mesh->draw(m_programID, GL_TRIANGLE_STRIP, mvp*move);
+
+	//Draw cube
+	cube->draw(m_programID, GL_TRIANGLES, mvp);
 
 	//Draw transforms with each color
 	glm::vec4 tmp = glm::vec4(0, 1, 0, 1);
@@ -379,7 +438,7 @@ void RenderApplication::draw()
 	//Draw grid plane
 	grid->draw(m_programID, GL_TRIANGLES, mvp);
 
-	glBindVertexArray(0);
+
 	glUseProgram(0);
 }
 
@@ -388,7 +447,3 @@ void RenderApplication::draw()
 //ToDo:: b/c writing code inside a really long string is not cool at all :(
 
 //ToDo:: shader class to bind uniforms or at least get uniforms...
-
-//ToDo::  mesh class to draw so instead of bind draw unbind just do mesh->draw() which really just does what you just typed.. 
-
-//ToDo::  could receive a mode mesh->draw(gl_triangles)( mesh->draw(gl_trianglestrips) etc...
