@@ -139,13 +139,14 @@ void RenderApplication::startup()
 {
 	//Making transform arrow
 	std::vector<glm::vec4> arrowShape;
+	arrowShape.push_back(glm::vec4(0, 0, 0, 1));
 	arrowShape.push_back(glm::vec4(.2f, 0, 0, 1));
 	arrowShape.push_back(glm::vec4(.2f, 2, 0, 1));
 	arrowShape.push_back(glm::vec4(.35f, 2, 0, 1));
 	arrowShape.push_back(glm::vec4(0, 3, 0, 1));
 
 	transarrow = new Mesh();
-	transarrow->initialize(genVertices(rotatePoints(arrowShape, 16), glm::vec4(1,1,1,1)), genStripIndices(4,16));
+	transarrow->initialize(genVertices(rotatePoints(arrowShape, 16), glm::vec4(1,1,1,1)), genStripIndices(5,16));
 	transarrow->create_buffers();
 
 
@@ -243,58 +244,11 @@ void RenderApplication::startup()
 	//Gen grid
 	generateGrid(7, 7);
 
+	m_shader = new Shader();
 
-	//Create shaders
-	/*const char * vsSource = "#version 410\n \
-							layout(location=0) in vec4 position; \
-							layout(location=1) in vec4 color; \
-							out vec4 vColor; \
-							uniform float time;\
-							uniform mat4 projectionViewWorldMatrix; \
-							void main() { vColor = color; \
-							vec4 disp = vec4(cos(time), sin(time), cos(time)/sin(time), 1);									\
-							vec4 np = disp + position;							\
-							gl_Position = projectionViewWorldMatrix * np; }";*/
+	m_shader->defaultLoad();
+	//m_shader->load("mrmattsvs.vert", GL_VERTEX_SHADER);
 
-	const char * vsSource = "#version 410\n \
-							layout(location=0) in vec4 position; \
-							layout(location=1) in vec4 color; \
-							out vec4 vColor; \
-							uniform mat4 projectionViewWorldMatrix; \
-							void main() { vColor = color; \
-							gl_Position = projectionViewWorldMatrix * position; }";
-
-	const char * fsSource = "#version 410\n \
-							in vec4 vColor; \
-							out vec4 fragColor; \
-							uniform vec4 zColor; \
-							void main() { fragColor = vColor * zColor; }";
-	int success = GL_FALSE;
-	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-	glShaderSource(vertexShader, 1, (const char**)&vsSource, 0);
-	glCompileShader(vertexShader);
-	glShaderSource(fragmentShader, 1, (const char**)&fsSource, 0);
-	glCompileShader(fragmentShader);
-
-	m_programID = glCreateProgram();
-
-	glAttachShader(m_programID, vertexShader);
-	glAttachShader(m_programID, fragmentShader);
-	glLinkProgram(m_programID);
-	glGetProgramiv(m_programID, GL_LINK_STATUS, &success);
-	if (success == GL_FALSE) {
-		int infoLogLength = 0;
-		glGetProgramiv(m_programID, GL_INFO_LOG_LENGTH, &infoLogLength);
-		char* infoLog = new char[infoLogLength];
-		glGetProgramInfoLog(m_programID, infoLogLength, 0, infoLog);
-		printf("Error: Failed to link shader program!\n");
-		printf("%s\n", infoLog);
-		delete[] infoLog;
-	}
-	glDeleteShader(fragmentShader);
-	glDeleteShader(vertexShader);
 }
 
 void RenderApplication::shutdown()
@@ -392,10 +346,10 @@ void RenderApplication::draw()
 	ImGui::End();
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_POINTS);
-	glUseProgram(m_programID);
+	m_shader->bind();
 
 	//Set MVP matrix
-	int mvpUniform = glGetUniformLocation(m_programID, "projectionViewWorldMatrix");
+	int mvpUniform = m_shader->getUniform("projectionViewWorldMatrix");
 	glm::mat4 pv = m_camera->getProjectionView();
 	glm::mat4 model = glm::mat4(1);
 	glm::mat4 mvp = pv * model;
@@ -406,40 +360,40 @@ void RenderApplication::draw()
 	glm::mat4 rotate90X = glm::rotate(glm::mat4(1), glm::pi<float>() / 2, glm::vec3(1, 0, 0));
 	
 	//Apply hella RGB fade to fragment shader
-	unsigned int handle = glGetUniformLocation(m_programID, "zColor");
+	unsigned int handle = m_shader->getUniform("zColor");
 	glUniform4fv(handle, 1, glm::value_ptr(colorfade));
 
 	//handle = glGetUniformLocation(m_programID, "time");
 	//glUniform1f(handle, pastTime);
 
 	//Draw sphere
-	m_mesh->draw(m_programID, GL_TRIANGLE_STRIP, mvp*move);
+	m_mesh->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp*move);
 
 	//Draw cube
-	cube->draw(m_programID, GL_TRIANGLES, mvp);
+	cube->draw(m_shader->program(), GL_TRIANGLES, mvp);
 
 	//Draw transforms with each color
 	glm::vec4 tmp = glm::vec4(0, 1, 0, 1);
 	glUniform4fv(handle, 1, &tmp[0]);
-	transarrow->draw(m_programID, GL_TRIANGLE_STRIP, mvp);
+	transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp);
 
 	tmp = glm::vec4(1, 0, 0, 1);
 	glUniform4fv(handle, 1, &tmp[0]);
-	transarrow->draw(m_programID, GL_TRIANGLE_STRIP, mvp * rotate90Z);
+	transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp * rotate90Z);
 
 	tmp = glm::vec4(0, 0, 1, 1);
 	glUniform4fv(handle, 1, &tmp[0]);
-	transarrow->draw(m_programID, GL_TRIANGLE_STRIP, mvp * rotate90X);
+	transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp * rotate90X);
 
 	//Set the color back to normal
 	tmp = glm::vec4(1, 1, 1, 1);
 	glUniform4fv(handle, 1, &tmp[0]);
 
 	//Draw grid plane
-	grid->draw(m_programID, GL_TRIANGLES, mvp);
+	grid->draw(m_shader->program(), GL_TRIANGLES, mvp);
 
 
-	glUseProgram(0);
+	m_shader->unbind();
 }
 
 //ToDo:: shader to read from file 

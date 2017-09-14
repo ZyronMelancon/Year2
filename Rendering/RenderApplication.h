@@ -3,6 +3,7 @@
 #include "FlyCamera.h"
 #include <vector>
 #include "ext.hpp"
+#include "Shader.h"
 
 class Mesh;
 
@@ -26,4 +27,5 @@ public:
 	Mesh * m_mesh;
 	Mesh * grid;
 	unsigned int gridCount;
+	Shader * m_shader;
 };

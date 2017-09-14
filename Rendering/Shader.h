@@ -15,7 +15,7 @@ public:
 	unsigned int m_fragmentShader;
 	const char* vsSource;
 	const char* fsSource;
-
+	unsigned int program();
 
 private:
 	unsigned int m_program;
