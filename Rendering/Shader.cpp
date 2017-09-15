@@ -62,11 +62,11 @@ void Shader::load(const char* filename, unsigned type)
 		glShaderSource(m_fragmentShader, 1, (const char **)&fsSource, 0);
 		glCompileShader(m_fragmentShader);
 	}
-	m_program = glCreateProgram();
 }
 
 void Shader::attach()
 {
+	m_program = glCreateProgram();
 	glAttachShader(m_program, m_vertexShader);
 	glAttachShader(m_program, m_fragmentShader);
 	glLinkProgram(m_program);
@@ -109,25 +109,24 @@ void Shader::defaultLoad()
 	glShaderSource(m_fragmentShader, 1, (const char**)&fsSource, 0);
 	glCompileShader(m_fragmentShader);
 
-	m_program = glCreateProgram();
 	this->attach();
 
-	glLinkProgram(m_program);
-	int success = GL_FALSE;
-	glGetProgramiv(m_program, GL_LINK_STATUS, &success);
-	if (success == GL_FALSE) {
-		int infoLogLength = 0;
-		glGetProgramiv(m_program, GL_INFO_LOG_LENGTH, &infoLogLength);
-		char* infoLog = new char[infoLogLength];
-		glGetProgramInfoLog(m_program, infoLogLength, 0, infoLog);
-		printf("Error: Failed to link shader program!\n");
-		printf("%s\n", infoLog);
-		delete[] infoLog;
-	}
+	//glLinkProgram(m_program);
+	//int success = GL_FALSE;
+	//glGetProgramiv(m_program, GL_LINK_STATUS, &success);
+	//if (success == GL_FALSE) {
+	//	int infoLogLength = 0;
+	//	glGetProgramiv(m_program, GL_INFO_LOG_LENGTH, &infoLogLength);
+	//	char* infoLog = new char[infoLogLength];
+	//	glGetProgramInfoLog(m_program, infoLogLength, 0, infoLog);
+	//	printf("Error: Failed to link shader program!\n");
+	//	printf("%s\n", infoLog);
+	//	delete[] infoLog;
+	//}
 
 
-	glDeleteShader(m_fragmentShader);
-	glDeleteShader(m_vertexShader);
+	//glDeleteShader(m_fragmentShader);
+	//glDeleteShader(m_vertexShader);
 }
 
 unsigned Shader::getUniform(const char* uni)

@@ -37,7 +37,7 @@ std::vector<glm::vec4> rotatePoints(std::vector<glm::vec4> points, int nm)
 		for (unsigned int o = 0; o < points.size(); o++)
 		{
 			//Todo:: should breakout this rad variable to be something meaningful  and maybe not do decimal mult 
-			float rad = 2 * glm::pi<float>() / nm * i;
+			float rad = glm::two_pi<float>() / nm * i;
 			float newX = points[o].x * cos(rad);
 			float newY = points[o].y;
 			float newZ = points[o].x * -sin(rad);
@@ -231,7 +231,7 @@ void RenderApplication::startup()
 
 	m_mesh = new Mesh();
 
-	m_mesh->initialize(genVertices(rotatePoints(genHalfCircle(radius,numPoints), numMeridian), glm::vec4(1,1,1,1)), genStripIndices(numPoints, numMeridian));
+	m_mesh->initialize(genVertices(rotatePoints(genHalfCircle(radius,numPoints), numMeridian), glm::vec4(1,1,1,0.7f)), genStripIndices(numPoints, numMeridian));
 	//I think Mr. Matthew will yell at me for this but it works...
 
 	m_mesh->create_buffers();
@@ -246,8 +246,10 @@ void RenderApplication::startup()
 
 	m_shader = new Shader();
 
-	m_shader->defaultLoad();
-	//m_shader->load("mrmattsvs.vert", GL_VERTEX_SHADER);
+	//m_shader->defaultLoad();
+	m_shader->load("vs.vert", GL_VERTEX_SHADER);
+	m_shader->load("fsphong.frag", GL_FRAGMENT_SHADER);
+	m_shader->attach();
 
 }
 
@@ -325,8 +327,8 @@ void RenderApplication::draw()
 	glm::vec4 colorfade = glm::vec4((sin(pastTime) / 2) + 0.5f, (cos(pastTime) / 2) + 0.5f, (-sin(pastTime) / 2) + 0.5f, 1);
 
 	//Depth stuff
-	glEnable(GL_DEPTH_TEST);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//glEnable(GL_DEPTH_TEST);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//GUI stuff
 	ImGui_ImplGlfwGL3_NewFrame();
@@ -345,7 +347,7 @@ void RenderApplication::draw()
 	ImGui::TextColored(ImVec4(colorfade.x, colorfade.y, colorfade.z, colorfade.w), glm::to_string(colorfade).c_str());
 	ImGui::End();
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_POINTS);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
 	m_shader->bind();
 
 	//Set MVP matrix
@@ -353,7 +355,10 @@ void RenderApplication::draw()
 	glm::mat4 pv = m_camera->getProjectionView();
 	glm::mat4 model = glm::mat4(1);
 	glm::mat4 mvp = pv * model;
-	
+	glm::vec3 campos = glm::vec3(m_camera->getView()[3].x, m_camera->getView()[3].y, m_camera->getView()[3].z);
+	unsigned int hand = m_shader->getUniform("camPos");
+	glUniform4fv(hand, 1, glm::value_ptr(campos));
+
 	//Some extra matrices
 	glm::mat4 move = glm::translate(glm::vec3(3, 1, 3));
 	glm::mat4 rotate90Z = glm::rotate(glm::mat4(1),-glm::pi<float>()/2, glm::vec3(0, 0, 1));
