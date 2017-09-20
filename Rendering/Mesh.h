@@ -6,6 +6,7 @@ struct Vertex
 {
 	glm::vec4 position;
 	glm::vec4 color;
+	glm::vec4 normal;
 };
 
 class Mesh
@@ -26,5 +27,4 @@ private:
 	unsigned int m_vao;
 	unsigned int m_vbo;
 	unsigned int m_ibo;
-	
 };

@@ -225,8 +225,8 @@ void RenderApplication::startup()
 
 
 	//Sphere generation
-	int numPoints = 20;
-	int numMeridian = 20;
+	int numPoints = 50;
+	int numMeridian = 50;
 	float radius = 0.5f;
 
 	m_mesh = new Mesh();
@@ -247,8 +247,8 @@ void RenderApplication::startup()
 	m_shader = new Shader();
 
 	//m_shader->defaultLoad();
-	m_shader->load("vs.vert", GL_VERTEX_SHADER);
-	m_shader->load("fsphong.frag", GL_FRAGMENT_SHADER);
+	m_shader->load("./shaders/vs.vert", GL_VERTEX_SHADER);
+	m_shader->load("./shaders/fsphong.frag", GL_FRAGMENT_SHADER);
 	m_shader->attach();
 
 }
@@ -350,14 +350,17 @@ void RenderApplication::draw()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
 	m_shader->bind();
 
+
 	//Set MVP matrix
 	int mvpUniform = m_shader->getUniform("projectionViewWorldMatrix");
 	glm::mat4 pv = m_camera->getProjectionView();
-	glm::mat4 model = glm::mat4(1);
-	glm::mat4 mvp = pv * model;
+	glm::mat4 mvp = pv * glm::mat4(1);
+
+	//Set cam pos
 	glm::vec3 campos = glm::vec3(m_camera->getView()[3].x, m_camera->getView()[3].y, m_camera->getView()[3].z);
 	unsigned int hand = m_shader->getUniform("camPos");
 	glUniform4fv(hand, 1, glm::value_ptr(campos));
+
 
 	//Some extra matrices
 	glm::mat4 move = glm::translate(glm::vec3(3, 1, 3));
