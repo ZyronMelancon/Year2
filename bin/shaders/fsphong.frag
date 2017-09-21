@@ -3,7 +3,7 @@ uniform vec3 kA = vec3(1,1,1);
 uniform vec3 kD = vec3(1,1,1);
 uniform vec3 kS = vec3(1,1,1);
 
-uniform vec3 iA = vec3(0.25f,0.25f,0.25f);
+uniform vec3 iA = vec3(0,0.4f,0.25f);
 uniform vec3 iD = vec3(1,1,1);
 uniform vec3 iS = vec3(1,1,1);
 uniform float iSpecPower = 100.0f;
@@ -13,7 +13,7 @@ in vec3 vNorm;
 in vec4 vPosition;
 
 uniform vec3 camPos;
-uniform vec3 L = vec3(1,1,1);
+uniform vec3 L = vec3(.5f,1,.5f);
 
 out vec4 fragColor;
 uniform vec4 zColor;

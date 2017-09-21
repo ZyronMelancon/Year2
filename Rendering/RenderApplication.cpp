@@ -324,25 +324,23 @@ void RenderApplication::update(float deltaTime)
 void RenderApplication::draw()
 {
 	//Hella RGB fade
-	glm::vec4 colorfade = glm::vec4((sin(pastTime) / 2) + 0.5f, (cos(pastTime) / 2) + 0.5f, (-sin(pastTime) / 2) + 0.5f, 1);
+	glm::vec4 colorfade = glm::vec4((sin(pastTime) / 2) + 0.5f, (sin(pastTime - glm::two_pi<float>() / 3) / 2) + 0.5f, (sin(pastTime - glm::two_pi<float>() / 3 * 2) / 2) + 0.5f, 1);
 
 	//Depth stuff
-	//glEnable(GL_DEPTH_TEST);
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//GUI stuff
 	ImGui_ImplGlfwGL3_NewFrame();
-	ImGui::Begin("menu");
-	ImGui::Text("This is a test.");
-	ImGui::BulletText("This is also a test.");
-	
-	ImGui::MenuItem("This too.", 0, false, true);
-	ImGui::End();
+	{
+	//ImGui::Begin("menu");
+	//ImGui::Text("This is a test.");
+	//ImGui::BulletText("This is also a test.");
+	//ImGui::MenuItem("This too.", 0, false, true);
+	//ImGui::End();
 
-	if (ImGui::Button("hello world"))
-		printf("hello guvanaana\n");
-
-	ImGui::Begin("ayyyy");
+	//if (ImGui::Button("hello world"))
+	//	printf("hello guvanaana\n");
+	}
+	ImGui::Begin("Fade Color");
 	ImGui::SliderFloat3("color zColor", &colorfade[0], 0, 1);
 	ImGui::TextColored(ImVec4(colorfade.x, colorfade.y, colorfade.z, colorfade.w), glm::to_string(colorfade).c_str());
 	ImGui::End();
@@ -364,6 +362,7 @@ void RenderApplication::draw()
 
 	//Some extra matrices
 	glm::mat4 move = glm::translate(glm::vec3(3, 1, 3));
+	glm::mat4 move2 = glm::translate(glm::vec3(5,0,0));
 	glm::mat4 rotate90Z = glm::rotate(glm::mat4(1),-glm::pi<float>()/2, glm::vec3(0, 0, 1));
 	glm::mat4 rotate90X = glm::rotate(glm::mat4(1), glm::pi<float>() / 2, glm::vec3(1, 0, 0));
 	
@@ -378,7 +377,7 @@ void RenderApplication::draw()
 	m_mesh->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp*move);
 
 	//Draw cube
-	cube->draw(m_shader->program(), GL_TRIANGLES, mvp);
+	cube->draw(m_shader->program(), GL_TRIANGLES, mvp*move2);
 
 	//Draw transforms with each color
 	glm::vec4 tmp = glm::vec4(0, 1, 0, 1);
