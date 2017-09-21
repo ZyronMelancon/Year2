@@ -6,6 +6,7 @@
 
 #include <imgui.h>
 #include "imgui_impl_glfw_gl3.h"
+#include "gl_core_4_4.h"
 
 Mesh * transarrow;
 Mesh * cube;
@@ -315,7 +316,7 @@ void RenderApplication::update(float deltaTime)
 	}
 	if (glfwGetKey(m_window, GLFW_KEY_E) == GLFW_PRESS)
 	{
-		m_camera->setLookAt(glm::vec3(m_camera->getWorldTransform()[3][0], m_camera->getWorldTransform()[3][1], m_camera->getWorldTransform()[3][2]), glm::vec3(3, 1, 3), glm::vec3(0,1,0));
+		m_camera->setLookAt(glm::vec3(m_camera->getWorldTransform()[3][0], m_camera->getWorldTransform()[3][1], m_camera->getWorldTransform()[3][2]), glm::vec3(0, 0, 0), glm::vec3(0,1,0));
 	}
 
 
@@ -342,12 +343,13 @@ void RenderApplication::draw()
 	}
 	ImGui::Begin("Fade Color");
 	ImGui::SliderFloat3("color zColor", &colorfade[0], 0, 1);
+	
+	ImGui::SliderFloat("specular power", &specPower, 0, 256);
 	ImGui::TextColored(ImVec4(colorfade.x, colorfade.y, colorfade.z, colorfade.w), glm::to_string(colorfade).c_str());
 	ImGui::End();
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
 	m_shader->bind();
-
 
 	//Set MVP matrix
 	int mvpUniform = m_shader->getUniform("projectionViewWorldMatrix");
@@ -355,9 +357,14 @@ void RenderApplication::draw()
 	glm::mat4 mvp = pv * glm::mat4(1);
 
 	//Set cam pos
-	glm::vec3 campos = glm::vec3(m_camera->getView()[3].x, m_camera->getView()[3].y, m_camera->getView()[3].z);
+	glm::vec3 campos = glm::vec3(m_camera->getWorldTransform()[3].x, m_camera->getWorldTransform()[3].y, m_camera->getWorldTransform()[3].z);
 	unsigned int hand = m_shader->getUniform("camPos");
-	glUniform4fv(hand, 1, glm::value_ptr(campos));
+	unsigned int specPowerHandle = m_shader->getUniform("iSpecPower");
+	glUniform3fv(hand, 1, value_ptr(campos));
+	ImGui::Begin("Camera Info");
+	ImGui::SliderFloat3("pos", &campos[0], -9000, 9000);
+	ImGui::End();
+	glUniform1f(specPowerHandle, specPower);
 
 
 	//Some extra matrices
@@ -374,30 +381,30 @@ void RenderApplication::draw()
 	//glUniform1f(handle, pastTime);
 
 	//Draw sphere
-	m_mesh->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp*move);
+	m_mesh->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp);
 
-	//Draw cube
-	cube->draw(m_shader->program(), GL_TRIANGLES, mvp*move2);
+	////Draw cube
+	//cube->draw(m_shader->program(), GL_TRIANGLES, mvp*move2);
 
-	//Draw transforms with each color
+	////Draw transforms with each color
 	glm::vec4 tmp = glm::vec4(0, 1, 0, 1);
-	glUniform4fv(handle, 1, &tmp[0]);
-	transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp);
+	//glUniform4fv(handle, 1, &tmp[0]);
+	//transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp);
 
-	tmp = glm::vec4(1, 0, 0, 1);
-	glUniform4fv(handle, 1, &tmp[0]);
-	transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp * rotate90Z);
+	//tmp = glm::vec4(1, 0, 0, 1);
+	//glUniform4fv(handle, 1, &tmp[0]);
+	//transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp * rotate90Z);
 
-	tmp = glm::vec4(0, 0, 1, 1);
-	glUniform4fv(handle, 1, &tmp[0]);
-	transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp * rotate90X);
+	//tmp = glm::vec4(0, 0, 1, 1);
+	//glUniform4fv(handle, 1, &tmp[0]);
+	//transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp * rotate90X);
 
 	//Set the color back to normal
 	tmp = glm::vec4(1, 1, 1, 1);
 	glUniform4fv(handle, 1, &tmp[0]);
 
 	//Draw grid plane
-	grid->draw(m_shader->program(), GL_TRIANGLES, mvp);
+	//grid->draw(m_shader->program(), GL_TRIANGLES, mvp);
 
 
 	m_shader->unbind();

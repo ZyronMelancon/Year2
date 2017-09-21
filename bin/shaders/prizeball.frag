@@ -32,7 +32,8 @@ vec3 Diffuse = kD * iD * Ndl;
 
 vec3 R = reflect(L,N);
 vec3 E = normalize(camPos-vPosition.xyz);
-float specTerm = pow(max(0, dot(R,E)), iSpecPower);
+vec3 H = normalize(L - R);
+float specTerm = pow(max(0, dot(E,H)), iSpecPower);
 
 
 vec3 Specular = kS * iS * specTerm;

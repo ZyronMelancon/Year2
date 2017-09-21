@@ -20,7 +20,7 @@ out vec4 fragColor;
 
 
 void main() 
-{ 
+{
 vec3 Ambient = kA * iA;
 
 vec3 N = normalize(vPosition.xyz);
@@ -32,10 +32,11 @@ vec3 Diffuse = kD * iD * Ndl;
 
 vec3 R = reflect(L,N);
 vec3 E = normalize(camPos-vPosition.xyz);
-float specTerm = pow(max(0, dot(R,E)), iSpecPower);
+vec3 H = normalize(L + R);
+float specTerm = pow(max(0, dot(N,H)), iSpecPower);
 
 
 vec3 Specular = kS * iS * specTerm;
 
-fragColor = vec4(Ambient + Diffuse + Specular, 1) * vColor * zColor ;
+fragColor = vec4( Specular, 1) * vColor * zColor ;
 }
