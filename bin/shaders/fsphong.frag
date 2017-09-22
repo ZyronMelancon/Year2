@@ -1,9 +1,9 @@
 #version 410
-uniform vec3 kA = vec3(1,1,1);
-uniform vec3 kD = vec3(1,1,1);
+uniform vec3 kA = vec3(0.7,0.5,0.7);
+uniform vec3 kD = vec3(0.f,1f,1f);
 uniform vec3 kS = vec3(1,1,1);
 
-uniform vec3 iA = vec3(0.1f,0.25f,0.25f);
+uniform vec3 iA = vec3(1,1,1);
 uniform vec3 iD = vec3(1,1,1);
 uniform vec3 iS = vec3(1,1,1);
 uniform float iSpecPower;// = 50.0f;

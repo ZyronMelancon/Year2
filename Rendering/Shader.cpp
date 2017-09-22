@@ -125,8 +125,8 @@ void Shader::defaultLoad()
 	//}
 
 
-	//glDeleteShader(m_fragmentShader);
-	//glDeleteShader(m_vertexShader);
+	glDeleteShader(m_fragmentShader);
+	glDeleteShader(m_vertexShader);
 }
 
 unsigned Shader::getUniform(const char* uni)

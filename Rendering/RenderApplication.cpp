@@ -7,6 +7,7 @@
 #include <imgui.h>
 #include "imgui_impl_glfw_gl3.h"
 #include "gl_core_4_4.h"
+#include "imgui_internal.h"
 
 Mesh * transarrow;
 Mesh * cube;
@@ -322,12 +323,12 @@ void RenderApplication::update(float deltaTime)
 
 }
 
+
+bool zColorActive = true;
 void RenderApplication::draw()
 {
 	//Hella RGB fade
 	glm::vec4 colorfade = glm::vec4((sin(pastTime) / 2) + 0.5f, (sin(pastTime - glm::two_pi<float>() / 3) / 2) + 0.5f, (sin(pastTime - glm::two_pi<float>() / 3 * 2) / 2) + 0.5f, 1);
-
-	//Depth stuff
 
 	//GUI stuff
 	ImGui_ImplGlfwGL3_NewFrame();
@@ -341,12 +342,20 @@ void RenderApplication::draw()
 	//if (ImGui::Button("hello world"))
 	//	printf("hello guvanaana\n");
 	}
-	ImGui::Begin("Fade Color");
-	ImGui::SliderFloat3("color zColor", &colorfade[0], 0, 1);
-	
-	ImGui::SliderFloat("specular power", &specPower, 0, 256);
-	ImGui::TextColored(ImVec4(colorfade.x, colorfade.y, colorfade.z, colorfade.w), glm::to_string(colorfade).c_str());
+
+	ImGui::Begin("Color Graph");
+	ImGui::PlotHistogram("R", &colorfade[0],1);
 	ImGui::End();
+
+	ImGui::BeginMainMenuBar();
+	ImGui::BeginMenu("Color");
+	{
+		//ImGui::SliderFloat3("color zColor", &colorfade[0], 0, 1);
+		ImGui::Checkbox("zColor Active", &zColorActive);
+		ImGui::SliderFloat("specular power", &specPower, 0, 256);
+		//ImGui::TextColored(ImVec4(colorfade.x, colorfade.y, colorfade.z, colorfade.w), glm::to_string(colorfade).c_str());
+	}
+	ImGui::EndMainMenuBar();
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
 	m_shader->bind();
@@ -361,9 +370,6 @@ void RenderApplication::draw()
 	unsigned int hand = m_shader->getUniform("camPos");
 	unsigned int specPowerHandle = m_shader->getUniform("iSpecPower");
 	glUniform3fv(hand, 1, value_ptr(campos));
-	ImGui::Begin("Camera Info");
-	ImGui::SliderFloat3("pos", &campos[0], -9000, 9000);
-	ImGui::End();
 	glUniform1f(specPowerHandle, specPower);
 
 
