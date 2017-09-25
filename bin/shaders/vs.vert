@@ -6,10 +6,11 @@ out vec4 vColor;
 out vec4 vPosition;
 out vec4 vNorm;
 uniform mat4 projectionViewWorldMatrix;
+uniform mat4 model;
 void main()
 {
-vPosition = position;
-vNorm = normalize(position);
+vPosition = model * position;
+vNorm = normal;
 vColor = color;
 gl_Position = projectionViewWorldMatrix * position;
 }

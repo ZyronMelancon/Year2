@@ -1,3 +1,4 @@
+#define GLM_FORCE_SWIZZLE
 #include "RenderApplication.h"
 #include <gl_core_4_4.h>
 #include <GLFW/glfw3.h>
@@ -74,6 +75,8 @@ std::vector<Vertex> genVertices(std::vector<glm::vec4> vecs, glm::vec4 color)
 		Vertex vert;
 		vert.position = vecs[i];
 		vert.color = color;
+		glm::vec3 norm = vert.position.xyz();
+		vert.normal = glm::vec4(norm, 1);
 		verts.push_back(vert);
 	}
 	return verts;
@@ -88,7 +91,7 @@ void RenderApplication::generateGrid(unsigned int rows, unsigned int cols)
 		for (unsigned int c = 0; c < cols; ++c)
 		{
 			aoVertices[r * cols + c].position = glm::vec4((float)c, 0, (float)r, 1);
-			glm::vec3 color = glm::vec3((float)r/rows, (float)c/cols, 1);
+			glm::vec3 color = glm::vec3((float)r / rows, (float)c / cols, 1);
 			aoVertices[r * cols + c].color = glm::vec4(color, 1);
 		}
 	const unsigned int numitems = (rows - 1) * (cols - 1) * 6;
@@ -119,7 +122,7 @@ void RenderApplication::generateGrid(unsigned int rows, unsigned int cols)
 	grid = new Mesh();
 
 	grid->initialize(verts, indices);
-	
+
 	grid->create_buffers();
 
 	gridCount = (rows - 1) * (cols - 1) * 6;
@@ -148,7 +151,7 @@ void RenderApplication::startup()
 	arrowShape.push_back(glm::vec4(0, 3, 0, 1));
 
 	transarrow = new Mesh();
-	transarrow->initialize(genVertices(rotatePoints(arrowShape, 16), glm::vec4(1,1,1,1)), genStripIndices(5,16));
+	transarrow->initialize(genVertices(rotatePoints(arrowShape, 16), glm::vec4(1, 1, 1, 1)), genStripIndices(5, 16));
 	transarrow->create_buffers();
 
 
@@ -222,7 +225,7 @@ void RenderApplication::startup()
 	}
 
 	cube = new Mesh();
-	cube->initialize(genVertices(cubeVecs, glm::vec4(1,1,1,1)), cubeInds);
+	cube->initialize(genVertices(cubeVecs, glm::vec4(1, 1, 1, 1)), cubeInds);
 	cube->create_buffers();
 
 
@@ -233,7 +236,7 @@ void RenderApplication::startup()
 
 	m_mesh = new Mesh();
 
-	m_mesh->initialize(genVertices(rotatePoints(genHalfCircle(radius,numPoints), numMeridian), glm::vec4(1,1,1,0.7f)), genStripIndices(numPoints, numMeridian));
+	m_mesh->initialize(genVertices(rotatePoints(genHalfCircle(radius, numPoints), numMeridian), glm::vec4(1, 1, 1, 0.7f)), genStripIndices(numPoints, numMeridian));
 	//I think Mr. Matthew will yell at me for this but it works...
 
 	m_mesh->create_buffers();
@@ -245,13 +248,17 @@ void RenderApplication::startup()
 
 	//Gen grid
 	generateGrid(7, 7);
+ 
 
-	m_shader = new Shader();
+	m_blinnPhong = new Shader();
+	m_blinnPhong->load("./shaders/vs.vert", GL_VERTEX_SHADER);
+	m_blinnPhong->load("./shaders/fsblinn.frag", GL_FRAGMENT_SHADER);
+	m_blinnPhong->attach();
 
-	//m_shader->defaultLoad();
-	m_shader->load("./shaders/vs.vert", GL_VERTEX_SHADER);
-	m_shader->load("./shaders/fsphong.frag", GL_FRAGMENT_SHADER);
-	m_shader->attach();
+	m_Phong = new Shader();
+	m_Phong->load("./shaders/vs.vert", GL_VERTEX_SHADER);
+	m_Phong->load("./shaders/fsphong.frag", GL_FRAGMENT_SHADER);
+	m_Phong->attach();
 
 }
 
@@ -317,7 +324,7 @@ void RenderApplication::update(float deltaTime)
 	}
 	if (glfwGetKey(m_window, GLFW_KEY_E) == GLFW_PRESS)
 	{
-		m_camera->setLookAt(glm::vec3(m_camera->getWorldTransform()[3][0], m_camera->getWorldTransform()[3][1], m_camera->getWorldTransform()[3][2]), glm::vec3(0, 0, 0), glm::vec3(0,1,0));
+		m_camera->setLookAt(glm::vec3(m_camera->getWorldTransform()[3][0], m_camera->getWorldTransform()[3][1], m_camera->getWorldTransform()[3][2]), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	}
 
 
@@ -327,73 +334,113 @@ void RenderApplication::update(float deltaTime)
 bool zColorActive = true;
 void RenderApplication::draw()
 {
+
 	//Hella RGB fade
 	glm::vec4 colorfade = glm::vec4((sin(pastTime) / 2) + 0.5f, (sin(pastTime - glm::two_pi<float>() / 3) / 2) + 0.5f, (sin(pastTime - glm::two_pi<float>() / 3 * 2) / 2) + 0.5f, 1);
 
 	//GUI stuff
 	ImGui_ImplGlfwGL3_NewFrame();
 	{
-	//ImGui::Begin("menu");
-	//ImGui::Text("This is a test.");
-	//ImGui::BulletText("This is also a test.");
-	//ImGui::MenuItem("This too.", 0, false, true);
-	//ImGui::End();
+		//ImGui::Begin("menu");
+		//ImGui::Text("This is a test.");
+		//ImGui::BulletText("This is also a test.");
+		//ImGui::MenuItem("This too.", 0, false, true);
+		//ImGui::End();
 
-	//if (ImGui::Button("hello world"))
-	//	printf("hello guvanaana\n");
+		//if (ImGui::Button("hello world"))
+		//	printf("hello guvanaana\n");
 	}
 
 	ImGui::Begin("Color Graph");
-	ImGui::PlotHistogram("R", &colorfade[0],1);
+	ImGui::PlotHistogram("R", &colorfade[0], 1);
 	ImGui::End();
 
-	ImGui::BeginMainMenuBar();
-	ImGui::BeginMenu("Color");
+	if (ImGui::BeginMainMenuBar())
 	{
-		//ImGui::SliderFloat3("color zColor", &colorfade[0], 0, 1);
-		ImGui::Checkbox("zColor Active", &zColorActive);
-		ImGui::SliderFloat("specular power", &specPower, 0, 256);
-		//ImGui::TextColored(ImVec4(colorfade.x, colorfade.y, colorfade.z, colorfade.w), glm::to_string(colorfade).c_str());
+		if (ImGui::BeginMenu("Color"))
+		{
+
+			//ImGui::SliderFloat3("color zColor", &colorfade[0], 0, 1);
+			ImGui::Checkbox("zColor Active", &zColorActive);
+			ImGui::SliderFloat("specular power", &specPower, 0.0f, 8.0f, "%.3f",0.5f);
+			//ImGui::TextColored(ImVec4(colorfade.x, colorfade.y, colorfade.z, colorfade.w), glm::to_string(colorfade).c_str());
+			ImGui::EndMenu();
+		}
 	}
 	ImGui::EndMainMenuBar();
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
-	m_shader->bind();
 
-	//Set MVP matrix
-	int mvpUniform = m_shader->getUniform("projectionViewWorldMatrix");
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
+	Shader* m_shader;
+	
+
+	auto model = glm::mat4(1);
 	glm::mat4 pv = m_camera->getProjectionView();
-	glm::mat4 mvp = pv * glm::mat4(1);
+	glm::mat4 mvp = pv * model;
 
 	//Set cam pos
 	glm::vec3 campos = glm::vec3(m_camera->getWorldTransform()[3].x, m_camera->getWorldTransform()[3].y, m_camera->getWorldTransform()[3].z);
-	unsigned int hand = m_shader->getUniform("camPos");
-	unsigned int specPowerHandle = m_shader->getUniform("iSpecPower");
-	glUniform3fv(hand, 1, value_ptr(campos));
-	glUniform1f(specPowerHandle, specPower);
+
+	//Set MVP matrix
 
 
 	//Some extra matrices
 	glm::mat4 move = glm::translate(glm::vec3(3, 1, 3));
-	glm::mat4 move2 = glm::translate(glm::vec3(5,0,0));
-	glm::mat4 rotate90Z = glm::rotate(glm::mat4(1),-glm::pi<float>()/2, glm::vec3(0, 0, 1));
+	glm::mat4 move2 = glm::translate(glm::vec3(5, 0, 0));
+	glm::mat4 rotate90Z = glm::rotate(glm::mat4(1), -glm::pi<float>() / 2, glm::vec3(0, 0, 1));
 	glm::mat4 rotate90X = glm::rotate(glm::mat4(1), glm::pi<float>() / 2, glm::vec3(1, 0, 0));
-	
-	//Apply hella RGB fade to fragment shader
-	unsigned int handle = m_shader->getUniform("zColor");
-	glUniform4fv(handle, 1, glm::value_ptr(colorfade));
+
+
+
 
 	//handle = glGetUniformLocation(m_programID, "time");
 	//glUniform1f(handle, pastTime);
 
 	//Draw sphere
-	m_mesh->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp);
 
+	for (int i = 0; i < 5; i++)
+	{
+		for (int j = 0; j < 5; j++)
+		{
+			if (i % 2 == 0)
+			{
+				m_shader = m_blinnPhong;
+				m_shader->bind();
+			}
+			else
+			{
+				m_shader = m_Phong;
+				m_shader->bind();
+			}
+
+			unsigned int mvpUniform = m_shader->getUniform("projectionViewWorldMatrix");
+			unsigned int hand = m_shader->getUniform("camPos");
+			unsigned int specPowerHandle = m_shader->getUniform("iSpecPower");			
+			unsigned int handle = m_shader->getUniform("zColor");
+
+			glUniform3fv(hand, 1, value_ptr(campos));
+			glUniform1f(specPowerHandle, specPower);
+			glUniform4fv(handle, 1, glm::value_ptr(colorfade));
+
+			model = glm::translate(glm::vec3(i * 5, 0, j * 5));
+			pv = m_camera->getProjectionView();
+			mvp = pv * model * glm::scale(glm::vec3(3));
+			glm::vec4 tmp = glm::vec4(0, 1, 0, 1);
+			//Set the color back to normal
+			tmp = glm::vec4(1, 1, 1, 1);
+			glUniform4fv(handle, 1, &tmp[0]);
+
+			m_mesh->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp);
+			m_shader->unbind();
+
+		}
+	}
 	////Draw cube
 	//cube->draw(m_shader->program(), GL_TRIANGLES, mvp*move2);
 
 	////Draw transforms with each color
-	glm::vec4 tmp = glm::vec4(0, 1, 0, 1);
+
 	//glUniform4fv(handle, 1, &tmp[0]);
 	//transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp);
 
@@ -405,10 +452,7 @@ void RenderApplication::draw()
 	//glUniform4fv(handle, 1, &tmp[0]);
 	//transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp * rotate90X);
 
-	//Set the color back to normal
-	tmp = glm::vec4(1, 1, 1, 1);
-	glUniform4fv(handle, 1, &tmp[0]);
-
+	
 	//Draw grid plane
 	//grid->draw(m_shader->program(), GL_TRIANGLES, mvp);
 

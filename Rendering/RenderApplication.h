@@ -27,6 +27,8 @@ public:
 	Mesh * m_mesh;
 	Mesh * grid;
 	unsigned int gridCount;
-	Shader * m_shader;
+	//Shader * m_shader;
+	Shader *m_blinnPhong;
+	Shader* m_Phong;
 	float specPower = 80.f;
 };
