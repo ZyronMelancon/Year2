@@ -3,8 +3,8 @@ uniform vec3 kA = vec3(1,1,1);
 uniform vec3 kD = vec3(1,1,1);
 uniform vec3 kS = vec3(1,1,1);
 
-uniform vec3 iA = vec3(0.1f,0.25f,0.25f);
-uniform vec3 iD = vec3(1,1,1);
+uniform vec3 iA = vec3(.3f,.3f,.3f);
+uniform vec3 iD = vec3(.7f,.7f,0.7f);
 uniform vec3 iS = vec3(1,1,1);
 uniform float iSpecPower;// = 50.0f;
 
@@ -23,7 +23,7 @@ void main()
 {
 
 vec3 Ambient = kA * iA;
-vec3 L = normalize(vec3(-1,-1,0));
+vec3 L = normalize(vec3(-1,-1,-1));
 
 vec3 N = normalize(vNorm.xyz);
 float Ndl = max(0.0f, dot(N,-L));

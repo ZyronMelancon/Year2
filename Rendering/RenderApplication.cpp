@@ -140,6 +140,12 @@ RenderApplication::~RenderApplication()
 {
 }
 
+glm::vec3 kA;
+glm::vec3 kD;
+glm::vec3 kS;
+glm::vec3 iA;
+glm::vec3 iD;
+glm::vec3 iS;
 void RenderApplication::startup()
 {
 	//Making transform arrow
@@ -260,6 +266,13 @@ void RenderApplication::startup()
 	m_Phong->load("./shaders/fsphong.frag", GL_FRAGMENT_SHADER);
 	m_Phong->attach();
 
+	kA = glm::vec3(1, 1, 1);
+	kD = glm::vec3(1, 1, 1);
+	kS = glm::vec3(1, 1, 1);
+
+	iA = glm::vec3(.3f, .3f, .3f);
+	iD = glm::vec3(.7f, .7f, .7f);
+	iS = glm::vec3(1, 1, 1);
 }
 
 void RenderApplication::shutdown()
@@ -332,57 +345,112 @@ void RenderApplication::update(float deltaTime)
 
 
 bool zColorActive = true;
+bool phongOrBlinnphong = false;
 void RenderApplication::draw()
 {
 
-	//Hella RGB fade
+	//RGB fade
 	glm::vec4 colorfade = glm::vec4((sin(pastTime) / 2) + 0.5f, (sin(pastTime - glm::two_pi<float>() / 3) / 2) + 0.5f, (sin(pastTime - glm::two_pi<float>() / 3 * 2) / 2) + 0.5f, 1);
 
 	//GUI stuff
 	ImGui_ImplGlfwGL3_NewFrame();
-	{
-		//ImGui::Begin("menu");
-		//ImGui::Text("This is a test.");
-		//ImGui::BulletText("This is also a test.");
-		//ImGui::MenuItem("This too.", 0, false, true);
-		//ImGui::End();
-
-		//if (ImGui::Button("hello world"))
-		//	printf("hello guvanaana\n");
-	}
-
-	ImGui::Begin("Color Graph");
-	ImGui::PlotHistogram("R", &colorfade[0], 1);
-	ImGui::End();
-
 	if (ImGui::BeginMainMenuBar())
 	{
+		if (ImGui::BeginMenu("Shader"))
+		{
+			ImGui::Text("Phong / Blinn-Phong");
+			ImGui::Checkbox("", &phongOrBlinnphong);
+			ImGui::Text("zColor");
+			ImGui::Checkbox("Active", &zColorActive);
+			ImGui::TextColored(ImVec4(colorfade.x, colorfade.y, colorfade.z, colorfade.w), glm::to_string(colorfade).c_str());
+			ImGui::EndMenu();
+		}
 		if (ImGui::BeginMenu("Color"))
 		{
-
-			//ImGui::SliderFloat3("color zColor", &colorfade[0], 0, 1);
-			ImGui::Checkbox("zColor Active", &zColorActive);
-			ImGui::SliderFloat("specular power", &specPower, 0.0f, 8.0f, "%.3f",0.5f);
-			//ImGui::TextColored(ImVec4(colorfade.x, colorfade.y, colorfade.z, colorfade.w), glm::to_string(colorfade).c_str());
+			ImGui::Text("Material");
+			ImGui::Text("Ambient");
+			ImGui::ColorEdit3(" ", &kA[0]);
+			ImGui::Text("Diffuse");
+			ImGui::ColorEdit3(" ", &kD[0]);
+			ImGui::Text("Specular");
+			ImGui::ColorEdit3(" ", &kS[0]);
+			ImGui::Text("Specular Power");
+			ImGui::Text("Light");
+			ImGui::Text("Ambient");
+			ImGui::ColorEdit3(" ", &iA[0]);
+			ImGui::Text("Diffuse");
+			ImGui::ColorEdit3(" ", &iD[0]);
+			ImGui::Text("Specular");
+			ImGui::ColorEdit3(" ", &iS[0]);
+			ImGui::Text("Specular Power");
+			ImGui::SliderFloat("", &specPower, 0.0f, 80.0f);
 			ImGui::EndMenu();
 		}
 	}
 	ImGui::EndMainMenuBar();
-
-
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
-	Shader* m_shader;
 	
+	
+	//Shader setup
+	Shader* m_shader;
 
+	switch (phongOrBlinnphong)
+	{
+	case false: 
+		m_shader = m_Phong;
+		break;
+	case true:
+		m_shader = m_blinnPhong;
+		break;
+	default:
+		m_shader = m_Phong;
+	}
+
+	m_shader->bind();
+
+	//Get cam pos
+	glm::vec3 campos = glm::vec3(m_camera->getWorldTransform()[3].x, m_camera->getWorldTransform()[3].y, m_camera->getWorldTransform()[3].z);
+
+	//Set uniforms
+	unsigned int handle = m_shader->getUniform("camPos");
+	glUniform3fv(handle, 1, value_ptr(campos));
+	unsigned int specPowerHandle = m_shader->getUniform("iSpecPower");
+	glUniform1f(specPowerHandle, specPower);
+	handle = m_shader->getUniform("zColor");
+
+	switch (zColorActive)
+	{
+	case false:
+		glUniform4fv(handle, 1, value_ptr(glm::vec4(1)));
+		break;
+	case true:
+		glUniform4fv(handle, 1, value_ptr(colorfade));
+		break;
+	default:
+		break;
+	}
+
+	handle = m_shader->getUniform("kA");
+	glUniform3fv(handle,1,&kA[0]);
+	handle = m_shader->getUniform("kD");
+	glUniform3fv(handle, 1, &kD[0]);
+	handle = m_shader->getUniform("kS");
+	glUniform3fv(handle, 1, &kS[0]);
+	handle = m_shader->getUniform("iA");
+	glUniform3fv(handle, 1, &iA[0]);
+	handle = m_shader->getUniform("iD");
+	glUniform3fv(handle, 1, &iD[0]);
+	handle = m_shader->getUniform("iS");
+	glUniform3fv(handle, 1, &iS[0]);
+
+	//Set MVP
 	auto model = glm::mat4(1);
 	glm::mat4 pv = m_camera->getProjectionView();
 	glm::mat4 mvp = pv * model;
 
-	//Set cam pos
-	glm::vec3 campos = glm::vec3(m_camera->getWorldTransform()[3].x, m_camera->getWorldTransform()[3].y, m_camera->getWorldTransform()[3].z);
+	//Draw
+	m_mesh->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp);
+	m_shader->unbind();
 
-	//Set MVP matrix
 
 
 	//Some extra matrices
@@ -391,15 +459,10 @@ void RenderApplication::draw()
 	glm::mat4 rotate90Z = glm::rotate(glm::mat4(1), -glm::pi<float>() / 2, glm::vec3(0, 0, 1));
 	glm::mat4 rotate90X = glm::rotate(glm::mat4(1), glm::pi<float>() / 2, glm::vec3(1, 0, 0));
 
-
-
-
 	//handle = glGetUniformLocation(m_programID, "time");
 	//glUniform1f(handle, pastTime);
 
-	//Draw sphere
-
-	for (int i = 0; i < 5; i++)
+	/*for (int i = 0; i < 5; i++)
 	{
 		for (int j = 0; j < 5; j++)
 		{
@@ -416,12 +479,12 @@ void RenderApplication::draw()
 
 			unsigned int mvpUniform = m_shader->getUniform("projectionViewWorldMatrix");
 			unsigned int hand = m_shader->getUniform("camPos");
-			unsigned int specPowerHandle = m_shader->getUniform("iSpecPower");			
+			unsigned int specPowerHandle = m_shader->getUniform("iSpecPower");
 			unsigned int handle = m_shader->getUniform("zColor");
 
 			glUniform3fv(hand, 1, value_ptr(campos));
 			glUniform1f(specPowerHandle, specPower);
-			glUniform4fv(handle, 1, glm::value_ptr(colorfade));
+			glUniform4fv(handle, 0, value_ptr(colorfade));
 
 			model = glm::translate(glm::vec3(i * 5, 0, j * 5));
 			pv = m_camera->getProjectionView();
@@ -433,35 +496,27 @@ void RenderApplication::draw()
 
 			m_mesh->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp);
 			m_shader->unbind();
-
 		}
 	}
-	////Draw cube
-	//cube->draw(m_shader->program(), GL_TRIANGLES, mvp*move2);
 
-	////Draw transforms with each color
 
-	//glUniform4fv(handle, 1, &tmp[0]);
-	//transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp);
+	//Draw cube
+	cube->draw(m_shader->program(), GL_TRIANGLES, mvp*move2);
 
-	//tmp = glm::vec4(1, 0, 0, 1);
-	//glUniform4fv(handle, 1, &tmp[0]);
-	//transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp * rotate90Z);
+	//Draw transforms with each color
 
-	//tmp = glm::vec4(0, 0, 1, 1);
-	//glUniform4fv(handle, 1, &tmp[0]);
-	//transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp * rotate90X);
+	glUniform4fv(handle, 1, &tmp[0]);
+	transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp);
+
+	tmp = glm::vec4(1, 0, 0, 1);
+	glUniform4fv(handle, 1, &tmp[0]);
+	transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp * rotate90Z);
+
+	tmp = glm::vec4(0, 0, 1, 1);
+	glUniform4fv(handle, 1, &tmp[0]);
+	transarrow->draw(m_shader->program(), GL_TRIANGLE_STRIP, mvp * rotate90X);
 
 	
 	//Draw grid plane
-	//grid->draw(m_shader->program(), GL_TRIANGLES, mvp);
-
-
-	m_shader->unbind();
+	grid->draw(m_shader->program(), GL_TRIANGLES, mvp);*/
 }
-
-//ToDo:: shader to read from file 
-
-//ToDo:: b/c writing code inside a really long string is not cool at all :(
-
-//ToDo:: shader class to bind uniforms or at least get uniforms...
