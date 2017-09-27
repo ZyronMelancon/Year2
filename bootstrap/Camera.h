@@ -14,6 +14,7 @@ public:
 	glm::mat4 getProjection();
 	glm::mat4 getProjectionView();
 	void setRotationX(double);
+	glm::vec3 getPosition();
 private:
 	glm::mat4 m_worldTransform;
 	glm::mat4 m_viewTransform;

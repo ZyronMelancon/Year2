@@ -84,3 +84,8 @@ void Camera::setRotationX(double rads)
 	m_worldTransform = m_worldTransform * rotateX;
 	m_viewTransform = glm::inverse(m_worldTransform);
 }
+
+glm::vec3 Camera::getPosition()
+{
+	return glm::vec3(getWorldTransform()[3][0], getWorldTransform()[3][1], getWorldTransform()[3][2]);
+}

@@ -67,16 +67,17 @@ std::vector<unsigned int> genStripIndices(int np, int nm)
 	return indices;
 }
 
-std::vector<Vertex> genVertices(std::vector<glm::vec4> vecs, glm::vec4 color)
+std::vector<Vertex> genVertices(std::vector<glm::vec4> vecs, std::vector<glm::vec4> colors, std::vector<glm::vec4> uv)
 {
 	std::vector<Vertex> verts;
 	for (int i = 0; i < vecs.size(); i++)
 	{
 		Vertex vert;
 		vert.position = vecs[i];
-		vert.color = color;
+		vert.color = colors[i];
 		glm::vec3 norm = vert.position.xyz();
 		vert.normal = glm::vec4(norm, 1);
+		vert.uv = uv[i];
 		verts.push_back(vert);
 	}
 	return verts;
@@ -391,8 +392,10 @@ void RenderApplication::draw()
 	
 	
 	//Shader setup
+
 	Shader* m_shader;
 
+	//Shader select
 	switch (phongOrBlinnphong)
 	{
 	case false: 
