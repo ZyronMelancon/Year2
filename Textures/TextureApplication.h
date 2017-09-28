@@ -18,5 +18,6 @@ public:
 	Mesh * m_mesh;
 	Shader * m_shader;
 	Camera * m_camera;
+	unsigned m_textureID;
 };
 

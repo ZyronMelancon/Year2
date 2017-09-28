@@ -7,7 +7,8 @@ struct Vertex
 	glm::vec4 position;
 	glm::vec4 color;
 	glm::vec4 normal;
-	glm::vec4 uv;
+	glm::vec4 tan;
+	glm::vec2 uv;
 };
 
 class Mesh
