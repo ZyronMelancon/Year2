@@ -7,6 +7,8 @@
 
 #include "imgui.h"
 #include "imgui_impl_glfw_gl3.h"
+#include <GLFW/glfw3.h>
+#include <gl_core_4_4.h>
 
 GenerationApplication::GenerationApplication()
 {
@@ -31,11 +33,11 @@ void genGrid(unsigned int rows, unsigned int cols, float spacing, Mesh *mesh)
 			if (r == 0 && c == 0)
 				uvvec = glm::vec2(0, 0);
 			else if (r == 0)
-				uvvec = glm::vec2(cols / c, 0);
+				uvvec = glm::vec2(static_cast<float>(c) / cols, 0);
 			else if (c == 0)
-				uvvec = glm::vec2(0, rows / r);
+				uvvec = glm::vec2(0, static_cast<float>(r) / rows);
 			else
-				uvvec = glm::vec2(cols / c, rows / r);
+				uvvec = glm::vec2(static_cast<float>(c) / cols, static_cast<float>(r) / rows);
 			aoVertices[r * cols + c].uv = uvvec;
 		}
 	const unsigned int numitems = (rows - 1) * (cols - 1) * 6;
@@ -79,7 +81,7 @@ void GenerationApplication::startup()
 
 	//Plane setup
 	m_plane = new Mesh();
-	genGrid(20, 20, 0.4f, m_plane);
+	genGrid(64, 64, 0.4f, m_plane);
 	m_plane->create_buffers();
 
 	//Shader setup
@@ -89,21 +91,42 @@ void GenerationApplication::startup()
 	m_shader->attach();
 
 	//Perlin setup
-	int dims = 20;
-	float * perlinData = new float[20 * 20];
-	float scale = (1.0f / dims) * 3;
-	for (int x = 0; x < 20; x++)
+	int dims = 64;
+	float * perlinData = new float[64 * 64];
+	float scale = (1.0f / dims) * 5;
+	int octaves = 6;
+
+	//float g1, g2, g3, g4;
+	//float u, v;
+
+	//float x1 = glm::lerp(g1, g2, u);
+	//float x2 = glm::lerp(g3, g4, u);
+
+	//float average = glm::lerp(x1, x2, v);
+
+	for (int x = 0; x < 64; x++)
 	{
-		for (int y = 0; y < 20; y++)
+		for (int y = 0; y < 64; y++)
 		{
-			perlinData[y * dims + x] = perlin(glm::vec2(x, y) * scale) * 0.5f + 0.5f;
+			float amplitude = 1.f;
+			float persistence = .3f;
+			perlinData[y * dims + x] = 0;
+
+			for (int o = 0; o < octaves; o++)
+			{
+				float freq = powf(2, (float)0);
+				float perlinSample = perlin(glm::vec2((float)x, (float)y) * scale) * 0.5f + 0.5f;
+				perlinData[y * dims + x] += perlinSample * amplitude;
+				amplitude *= persistence;
+			}
+			
 		}
 	}
 	
 	glGenTextures(1, &m_perlinTex);
 	glBindTexture(GL_TEXTURE_2D, m_perlinTex);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, 20, 20, 0, GL_RED, GL_FLOAT, perlinData);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, 64, 64, 0, GL_RED, GL_FLOAT, perlinData);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -117,8 +140,66 @@ void GenerationApplication::shutdown()
 {
 }
 
-void GenerationApplication::update(float)
+static double c_mx, c_my; //Current mouse pos
+static double p_mx, p_my; //Previous mouse pos
+static double d_mx, d_my; //Delta mouse
+float pastTime = 0;
+void GenerationApplication::update(float deltaTime)
 {
+	pastTime += deltaTime;
+
+	//Camera rotation
+	bool pressed = false;
+	glfwGetCursorPos(m_window, &c_mx, &c_my);
+	d_mx = c_mx - p_mx;
+	d_my = c_my - p_my;
+	p_mx = c_mx;
+	p_my = c_my;
+	if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS)
+	{
+		pressed = true;
+		glm::vec2 mousevector = glm::vec2(c_mx, c_my);
+		//printf("Mouse speed: %f, %f\n", d_mx, d_my);
+
+		m_cam->setRotationX(d_mx / 800);
+	}
+	{
+		//Camera movement
+		if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS)
+		{
+			glm::vec3 move = glm::vec3(m_cam->getWorldTransform()[3].x + m_cam->getWorldTransform()[0].z * deltaTime * 6, m_cam->getWorldTransform()[3].y, m_cam->getWorldTransform()[3].z - m_cam->getWorldTransform()[2].z * deltaTime * 6);
+			m_cam->setPosition(move);
+		}
+		if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_PRESS)
+		{
+			glm::vec3 move = glm::vec3(m_cam->getWorldTransform()[3].x - m_cam->getWorldTransform()[0].z * deltaTime * 6, m_cam->getWorldTransform()[3].y, m_cam->getWorldTransform()[3].z + m_cam->getWorldTransform()[2].z * deltaTime * 6);
+			m_cam->setPosition(move);
+		}
+		if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_PRESS)
+		{
+			glm::vec3 move = glm::vec3(m_cam->getWorldTransform()[3].x - m_cam->getWorldTransform()[2].z * deltaTime * 6, m_cam->getWorldTransform()[3].y, m_cam->getWorldTransform()[3].z - m_cam->getWorldTransform()[0].z * deltaTime * 6);
+			m_cam->setPosition(move);
+		}
+		if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_PRESS)
+		{
+			glm::vec3 move = glm::vec3(m_cam->getWorldTransform()[3].x + m_cam->getWorldTransform()[2].z * deltaTime * 6, m_cam->getWorldTransform()[3].y, m_cam->getWorldTransform()[3].z + m_cam->getWorldTransform()[0].z * deltaTime * 6);
+			m_cam->setPosition(move);
+		}
+		if (glfwGetKey(m_window, GLFW_KEY_SPACE) == GLFW_PRESS)
+		{
+			glm::vec3 move = glm::vec3(m_cam->getWorldTransform()[3].x, m_cam->getWorldTransform()[3].y + 6 * deltaTime, m_cam->getWorldTransform()[3].z);
+			m_cam->setPosition(move);
+		}
+		if (glfwGetKey(m_window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+		{
+			glm::vec3 move = glm::vec3(m_cam->getWorldTransform()[3].x, m_cam->getWorldTransform()[3].y - 6 * deltaTime, m_cam->getWorldTransform()[3].z);
+			m_cam->setPosition(move);
+		}
+		if (glfwGetKey(m_window, GLFW_KEY_E) == GLFW_PRESS)
+		{
+			m_cam->setLookAt(glm::vec3(m_cam->getWorldTransform()[3][0], m_cam->getWorldTransform()[3][1], m_cam->getWorldTransform()[3][2]), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+		}
+	}
 }
 
 void GenerationApplication::draw()
@@ -131,8 +212,8 @@ void GenerationApplication::draw()
 
 	auto mvp = m_cam->getProjectionView() * glm::mat4(1);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_perlinTex);
+	glUniformMatrix4fv(m_shader->getUniform("model"), 1, true, glm::value_ptr(glm::mat4(1)));
+	glUniformMatrix4fv(m_shader->getUniform("projectionViewMatrix"), 1, true, glm::value_ptr(m_cam->getProjectionView()));
 
 	glUniform1i(m_shader->getUniform("perlinTex"), 0);
 

@@ -12,11 +12,14 @@ out vec2 vUV;
 uniform mat4 projectionViewWorldMatrix;
 uniform mat4 model;
 
+uniform sampler2D perlinTex;
+
 void main()
 {
 vPosition = model * position;
 vNorm = normal;
 vColor = color;
 vUV = uv;
-gl_Position = projectionViewWorldMatrix * position;
+vPosition.y += texture(perlinTex, vUV).r * 5;
+gl_Position = projectionViewWorldMatrix * vPosition;
 }
